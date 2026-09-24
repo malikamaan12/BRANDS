@@ -4,6 +4,8 @@ echo ===================================================
 echo   Doha Live IP Hub - GitHub Push Helper
 echo ===================================================
 echo.
+echo Target Remote: https://github.com/malikamaan12/BRANDS-IP.git
+echo.
 
 set GIT_EXE=C:\Users\pceve\.gemini\antigravity-ide\scratch\mingit\cmd\git.exe
 
@@ -18,26 +20,26 @@ if not exist "%GIT_EXE%" (
     )
 )
 
-echo Checking Git status...
-"%GIT_EXE%" status
-
-echo.
-set /p REPO_URL="Enter your GitHub repository URL (e.g. https://github.com/username/doha-entertainment-ip-hub.git): "
-
-if "%REPO_URL%"=="" (
-    echo [ERROR] No repository URL provided. Aborting.
-    pause
-    exit /b 1
-)
-
-echo.
-echo Adding remote origin...
+echo Ensuring remote origin is configured...
 "%GIT_EXE%" remote remove origin 2>nul
-"%GIT_EXE%" remote add origin %REPO_URL%
+"%GIT_EXE%" remote add origin https://github.com/malikamaan12/BRANDS-IP.git
 
 echo.
-echo Pushing branch 'main' to GitHub...
+echo Preparing branch 'main'...
 "%GIT_EXE%" branch -M main
+
+echo.
+echo =========================================================================
+echo  NOTE: If https://github.com/malikamaan12/BRANDS-IP does not exist yet:
+echo  1. Please visit: https://github.com/new
+echo  2. Set Repository name to: BRANDS-IP
+echo  3. Choose Public or Private, and click 'Create repository'
+echo =========================================================================
+echo.
+pause
+
+echo.
+echo Pushing commits to GitHub...
 "%GIT_EXE%" push -u origin main
 
 if %ERRORLEVEL% equ 0 (
@@ -47,7 +49,8 @@ if %ERRORLEVEL% equ 0 (
     echo ===================================================
 ) else (
     echo.
-    echo [ERROR] Push failed. Please verify your GitHub credentials or repository permissions.
+    echo [NOTICE] If GitHub asked for authentication, sign in in the popup window.
+    echo If it failed with 404 Not Found, make sure https://github.com/malikamaan12/BRANDS-IP is created on GitHub!
 )
 
 pause
