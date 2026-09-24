@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS entertainment_ips (
     id VARCHAR(64) PRIMARY KEY,
     title TEXT NOT NULL,
-    category VARCHAR(64) NOT NULL,
+    category TEXT NOT NULL,
     image TEXT,
     licensor TEXT,
     producer TEXT,

@@ -163,7 +163,7 @@ const INITIAL_IPS = [
   {
     "id": "IP-011",
     "title": "Katmandu: Park & Media-Based Attractions",
-    "category": "Turnkey Family Entertainment Center (FEC) & Interactive Dark Ride",
+    "category": "Turnkey Family Entertainment Center & Dark Ride",
     "licensor": "Falcon's Beyond Global",
     "producer": "Falcon's Beyond Destinations",
     "person": "Cecil D. Magpuri (CEO) / Simon Philips (President)",
