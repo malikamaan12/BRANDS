@@ -1,5 +1,5 @@
 // ============================================================================
-// IP HUB — Role-Based Access Control (RBAC) & Authentication Service
+// E3 IP HUB — Role-Based Access Control (RBAC) & Authentication Service
 // Backed by Neon Serverless PostgreSQL & Local-First Resilient Cache
 // ============================================================================
 // Roles:
@@ -13,30 +13,85 @@
 //       Accounts can ONLY be provisioned by an Admin via the Admin Panel.
 // ============================================================================
 
-const USERS_STORAGE_KEY = 'iphub_rbac_users_v2';
-const SESSION_STORAGE_KEY = 'iphub_rbac_session_v2';
+const USERS_STORAGE_KEY = 'e3_iphub_rbac_users_v3';
+const SESSION_STORAGE_KEY = 'e3_iphub_rbac_session_v3';
 
-// Pre-seeded default credentials
+// Official E3 Enterprise Credentials
 export const DEFAULT_USERS = [
   {
     id: 'usr-admin-01',
-    name: 'Master Admin',
-    email: 'admin@iphub.com',
-    password: 'Admin@IPHub2026!',
+    name: 'E3 Master Administrator',
+    email: 'Admin@eeeqa.com',
+    password: 'E3qatech@123!',
     role: 'admin',
-    title: 'Chief Licensing Officer & Platform Administrator',
-    createdAt: '2026-01-15T08:00:00.000Z',
+    title: 'Chief Executive & Platform Administrator',
+    createdAt: '2026-01-01T00:00:00.000Z',
     isRoot: true,
     isActive: true
   },
   {
-    id: 'usr-licensing-02',
-    name: 'Licensing Associate',
-    email: 'user@iphub.com',
-    password: 'User@IPHub2026!',
+    id: 'usr-admin-02',
+    name: 'Amaan Malik',
+    email: 'amaan@eeeqa.com',
+    password: 'E3qatech@123!',
+    role: 'admin',
+    title: 'Operations Director & Administrator',
+    createdAt: '2026-01-02T00:00:00.000Z',
+    isRoot: false,
+    isActive: true
+  },
+  {
+    id: 'usr-user-01',
+    name: 'Hussain',
+    email: 'hussain@eeeqa.com',
+    password: 'E3qatech@123!',
     role: 'user',
-    title: 'Senior Entertainment Licensing Lead',
-    createdAt: '2026-02-01T10:00:00.000Z',
+    title: 'Entertainment Licensing Specialist',
+    createdAt: '2026-01-03T00:00:00.000Z',
+    isRoot: false,
+    isActive: true
+  },
+  {
+    id: 'usr-user-02',
+    name: 'Suhail',
+    email: 'suhail@eeeqa.com',
+    password: 'E3qatech@123!',
+    role: 'user',
+    title: 'Brand Partnership Lead',
+    createdAt: '2026-01-04T00:00:00.000Z',
+    isRoot: false,
+    isActive: true
+  },
+  {
+    id: 'usr-user-03',
+    name: 'Adil',
+    email: 'adil@eeeqa.com',
+    password: 'E3qatech@123!',
+    role: 'user',
+    title: 'Host Operations Lead',
+    createdAt: '2026-01-05T00:00:00.000Z',
+    isRoot: false,
+    isActive: true
+  },
+  {
+    id: 'usr-user-04',
+    name: 'M. Ali',
+    email: 'm.ali@eeeqa.com',
+    password: 'E3qatech@123!',
+    role: 'user',
+    title: 'Licensing Specialist',
+    createdAt: '2026-01-06T00:00:00.000Z',
+    isRoot: false,
+    isActive: true
+  },
+  {
+    id: 'usr-user-05',
+    name: 'Ahmad',
+    email: 'ahmad@eeeqa.com',
+    password: 'E3qatech@123!',
+    role: 'user',
+    title: 'Events Producer & Licensing Associate',
+    createdAt: '2026-01-07T00:00:00.000Z',
     isRoot: false,
     isActive: true
   }
@@ -54,9 +109,45 @@ class AuthService {
       const stored = localStorage.getItem(USERS_STORAGE_KEY);
       if (!stored) {
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
+      } else {
+        const currentUsers = JSON.parse(stored);
+        let updated = false;
+
+        // Ensure all DEFAULT_USERS are present with official password & role
+        DEFAULT_USERS.forEach((def) => {
+          const idx = currentUsers.findIndex((u) => u.email.toLowerCase() === def.email.toLowerCase());
+          if (idx === -1) {
+            currentUsers.push(def);
+            updated = true;
+          } else {
+            if (currentUsers[idx].password !== def.password || currentUsers[idx].role !== def.role) {
+              currentUsers[idx].password = def.password;
+              currentUsers[idx].role = def.role;
+              currentUsers[idx].name = def.name;
+              currentUsers[idx].title = def.title;
+              updated = true;
+            }
+          }
+        });
+
+        // Purge obsolete placeholder accounts (admin@iphub.com, user@iphub.com)
+        const cleaned = currentUsers.filter((u) => 
+          u.email.toLowerCase() !== 'admin@iphub.com' && 
+          u.email.toLowerCase() !== 'user@iphub.com'
+        );
+        if (cleaned.length !== currentUsers.length) {
+          updated = true;
+        }
+
+        if (updated) {
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(cleaned));
+        }
       }
     } catch (e) {
       console.warn('AuthService storage initialization warning:', e);
+      try {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
+      } catch {}
     }
   }
 
@@ -70,7 +161,7 @@ class AuthService {
       if (res.ok) {
         const data = await res.json();
         if (data.users && data.users.length > 0) {
-          const formatted = data.users.map(u => ({
+          const formatted = data.users.map((u) => ({
             id: u.id,
             name: u.name,
             email: u.email,
@@ -118,13 +209,13 @@ class AuthService {
       const parsed = JSON.parse(session);
       // Verify user still exists in current user directory
       const users = this.getUsers();
-      const matched = users.find(u => u.id === parsed.id || u.email.toLowerCase() === parsed.email.toLowerCase());
-      if (matched) {
+      const matched = users.find((u) => u.id === parsed.id || u.email.toLowerCase() === parsed.email.toLowerCase());
+      if (matched && matched.isActive !== false) {
         const sanitized = { ...matched };
         delete sanitized.password;
         return sanitized;
       }
-      return parsed;
+      return null;
     } catch {
       return null;
     }
@@ -150,19 +241,19 @@ class AuthService {
     }
 
     const users = this.getUsers();
-    const user = users.find(u => u.email.toLowerCase() === trimmedEmail);
+    const user = users.find((u) => u.email.toLowerCase() === trimmedEmail);
 
     if (!user) {
       return { 
         success: false, 
-        error: 'Account not found. Accounts are provisioned exclusively by system administrators.' 
+        error: 'Account not found. Accounts are provisioned exclusively by E3 system administrators.' 
       };
     }
 
     if (user.isActive === false) {
       return {
         success: false,
-        error: 'This account has been deactivated. Please contact an administrator.'
+        error: 'This account has been deactivated. Please contact an E3 administrator.'
       };
     }
 
@@ -196,7 +287,7 @@ class AuthService {
     }
 
     const users = this.getUsers();
-    const exists = users.some(u => u.email.toLowerCase() === trimmedEmail);
+    const exists = users.some((u) => u.email.toLowerCase() === trimmedEmail);
     if (exists) {
       return { success: false, error: `An account with email "${trimmedEmail}" already exists.` };
     }
@@ -242,7 +333,7 @@ class AuthService {
 
   async updateUser(userId, updates) {
     const users = this.getUsers();
-    const index = users.findIndex(u => u.id === userId);
+    const index = users.findIndex((u) => u.id === userId);
     if (index === -1) {
       return { success: false, error: 'User not found.' };
     }
@@ -285,7 +376,7 @@ class AuthService {
 
   async deleteUser(userId, currentAdminId) {
     const users = this.getUsers();
-    const target = users.find(u => u.id === userId);
+    const target = users.find((u) => u.id === userId);
 
     if (!target) {
       return { success: false, error: 'User not found.' };
@@ -299,7 +390,7 @@ class AuthService {
       return { success: false, error: 'Cannot delete your own active administrator account while logged in.' };
     }
 
-    const updated = users.filter(u => u.id !== userId);
+    const updated = users.filter((u) => u.id !== userId);
     this.saveUsers(updated);
 
     // Push delete to Neon
@@ -320,7 +411,7 @@ class AuthService {
     }
 
     const users = this.getUsers();
-    const index = users.findIndex(u => u.id === userId);
+    const index = users.findIndex((u) => u.id === userId);
     if (index === -1) {
       return { success: false, error: 'User not found.' };
     }

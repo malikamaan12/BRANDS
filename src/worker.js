@@ -232,17 +232,28 @@ export default {
         `;
 
         if (request.method === 'GET') {
-          // Check if table is empty; if so, seed default users
-          const [{ count }] = await sql`SELECT count(*)::int FROM iphub_users`;
-          if (count === 0) {
-            await sql`
-              INSERT INTO iphub_users (id, name, email, password, role, title, is_root)
-              VALUES 
-                ('usr-admin-01', 'Master Admin', 'admin@iphub.com', 'Admin@IPHub2026!', 'admin', 'Chief Licensing Officer & Platform Administrator', true),
-                ('usr-licensing-02', 'Licensing Associate', 'user@iphub.com', 'User@IPHub2026!', 'user', 'Senior Entertainment Licensing Lead', false)
-              ON CONFLICT (id) DO NOTHING;
-            `;
-          }
+          // Ensure all 7 official E3 team credentials exist in Neon
+          await sql`
+            INSERT INTO iphub_users (id, name, email, password, role, title, is_root, is_active)
+            VALUES 
+              ('usr-admin-01', 'E3 Master Administrator', 'admin@eeeqa.com', 'E3qatech@123!', 'admin', 'Chief Executive & Platform Administrator', true, true),
+              ('usr-admin-02', 'Amaan Malik', 'amaan@eeeqa.com', 'E3qatech@123!', 'admin', 'Operations Director & Administrator', false, true),
+              ('usr-user-01', 'Hussain', 'hussain@eeeqa.com', 'E3qatech@123!', 'user', 'Entertainment Licensing Specialist', false, true),
+              ('usr-user-02', 'Suhail', 'suhail@eeeqa.com', 'E3qatech@123!', 'user', 'Brand Partnership Lead', false, true),
+              ('usr-user-03', 'Adil', 'adil@eeeqa.com', 'E3qatech@123!', 'user', 'Host Operations Lead', false, true),
+              ('usr-user-04', 'M. Ali', 'm.ali@eeeqa.com', 'E3qatech@123!', 'user', 'Licensing Specialist', false, true),
+              ('usr-user-05', 'Ahmad', 'ahmad@eeeqa.com', 'E3qatech@123!', 'user', 'Events Producer & Licensing Associate', false, true)
+            ON CONFLICT (id) DO UPDATE SET
+              name = EXCLUDED.name,
+              email = EXCLUDED.email,
+              password = EXCLUDED.password,
+              role = EXCLUDED.role,
+              title = EXCLUDED.title,
+              updated_at = NOW();
+          `;
+
+          // Remove legacy placeholder records
+          await sql`DELETE FROM iphub_users WHERE email IN ('admin@iphub.com', 'user@iphub.com');`;
 
           const rows = await sql`
             SELECT id, name, email, password, role, title, is_root, is_active, created_at, updated_at

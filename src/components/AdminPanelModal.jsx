@@ -752,7 +752,7 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
                         <input
                           type="email"
                           required
-                          placeholder="s.jenkins@iphub.com"
+                          placeholder="colleague@eeeqa.com"
                           value={newEmail}
                           onChange={(e) => setNewEmail(e.target.value)}
                           style={{

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  X, Lock, Mail, Shield, ShieldCheck, Eye, EyeOff, 
-  LogIn, AlertCircle, Sparkles, KeyRound, UserCheck 
+  X, Lock, Mail, ShieldCheck, Eye, EyeOff, 
+  LogIn, AlertCircle, KeyRound, ChevronDown 
 } from 'lucide-react';
 import IpHubLogo from './IpHubLogo';
 import { authService, DEFAULT_USERS } from '../services/authService';
@@ -12,6 +12,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUserIndex, setSelectedUserIndex] = useState('');
 
   if (!isOpen) return null;
 
@@ -31,15 +32,10 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
-  const handleQuickFill = (userType) => {
+  const handleQuickFill = (userObj) => {
     setErrorMsg('');
-    if (userType === 'admin') {
-      setEmail(DEFAULT_USERS[0].email);
-      setPassword(DEFAULT_USERS[0].password);
-    } else {
-      setEmail(DEFAULT_USERS[1].email);
-      setPassword(DEFAULT_USERS[1].password);
-    }
+    setEmail(userObj.email);
+    setPassword(userObj.password);
   };
 
   return (
@@ -48,9 +44,9 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         className="glass-modal rbac-login-modal" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: '460px',
+          maxWidth: '470px',
           width: '92%',
-          background: 'rgba(12, 16, 32, 0.88)',
+          background: 'rgba(12, 16, 32, 0.92)',
           backdropFilter: 'blur(30px) saturate(190%)',
           WebkitBackdropFilter: 'blur(30px) saturate(190%)',
           border: '1px solid rgba(255, 255, 255, 0.16)',
@@ -71,14 +67,11 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <IpHubLogo size={36} />
             <div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span>IP HUB Credentials</span>
-                <span className="qatar-location-pill" style={{ padding: '0.15rem 0.5rem', fontSize: '0.62rem' }}>
-                  E3 RBAC
-                </span>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>E3 IP HUB Credentials</span>
               </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                Events & Entertainment Enterprises
+                Events & Entertainment Enterprises (E3)
               </div>
             </div>
           </div>
@@ -105,37 +98,17 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         </div>
 
         {/* Modal Body */}
-        <div style={{ padding: '1.5rem' }}>
+        <div style={{ padding: '1.4rem' }}>
           
-          {/* Strict Enterprise Access Banner (No Public Signup) */}
-          <div style={{
-            background: 'rgba(99, 102, 241, 0.08)',
-            border: '1px solid rgba(99, 102, 241, 0.22)',
-            borderRadius: '14px',
-            padding: '0.75rem 0.9rem',
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '0.65rem'
-          }}>
-            <ShieldCheck size={16} style={{ color: '#818cf8', flexShrink: 0, marginTop: '2px' }} />
-            <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.45 }}>
-              <strong style={{ color: '#ffffff', display: 'block', marginBottom: '2px' }}>
-                Private Enterprise System
-              </strong>
-              Public registration is disabled. All user accounts must be provisioned internally by an administrator via the Admin Panel.
-            </div>
-          </div>
-
-          {/* Quick-Fill Demo Credentials Bar */}
-          <div style={{ marginBottom: '1.25rem' }}>
+          {/* Quick-Fill Credentials Bar */}
+          <div style={{ marginBottom: '1.15rem' }}>
             <div style={{ 
               fontSize: '0.68rem', 
               fontWeight: 700, 
               color: 'var(--text-tertiary)', 
               textTransform: 'uppercase', 
               letterSpacing: '0.04em',
-              marginBottom: '0.5rem',
+              marginBottom: '0.45rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.35rem'
@@ -144,52 +117,92 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
               <span>1-Click Test Roles:</span>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem', marginBottom: '0.55rem' }}>
               <button
                 type="button"
-                onClick={() => handleQuickFill('admin')}
+                onClick={() => handleQuickFill(DEFAULT_USERS[0])}
                 style={{
                   background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(138, 21, 56, 0.18) 100%)',
                   border: '1px solid rgba(245, 158, 11, 0.35)',
                   borderRadius: '12px',
-                  padding: '0.6rem 0.75rem',
+                  padding: '0.55rem 0.7rem',
                   cursor: 'pointer',
                   textAlign: 'left',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.18s ease'
                 }}
                 className="quick-role-chip"
+                title="Admin@eeeqa.com (Master Admin)"
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#fbbf24' }}>👑 Admin</span>
-                  <span style={{ fontSize: '0.62rem', color: '#fef3c7', background: 'rgba(245, 158, 11, 0.25)', padding: '1px 5px', borderRadius: '4px' }}>Full Control</span>
+                  <span style={{ fontSize: '0.58rem', color: '#fef3c7', background: 'rgba(245, 158, 11, 0.25)', padding: '1px 5px', borderRadius: '4px' }}>Full</span>
                 </div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255, 255, 255, 0.65)', marginTop: '2px' }}>
-                  Deletions & Admin Panel
+                <div style={{ fontSize: '0.68rem', color: '#cbd5e1', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  Admin@eeeqa.com
                 </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleQuickFill('user')}
+                onClick={() => handleQuickFill(DEFAULT_USERS[1])}
                 style={{
-                  background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(99, 102, 241, 0.15) 100%)',
-                  border: '1px solid rgba(6, 182, 212, 0.3)',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(138, 21, 56, 0.18) 100%)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
                   borderRadius: '12px',
-                  padding: '0.6rem 0.75rem',
+                  padding: '0.55rem 0.7rem',
                   cursor: 'pointer',
                   textAlign: 'left',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.18s ease'
                 }}
                 className="quick-role-chip"
+                title="amaan@eeeqa.com (Amaan Malik - Admin)"
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#38bdf8' }}>👤 Normal User</span>
-                  <span style={{ fontSize: '0.62rem', color: '#e0f2fe', background: 'rgba(6, 182, 212, 0.2)', padding: '1px 5px', borderRadius: '4px' }}>Operational</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#fbbf24' }}>👑 Amaan</span>
+                  <span style={{ fontSize: '0.58rem', color: '#fef3c7', background: 'rgba(245, 158, 11, 0.25)', padding: '1px 5px', borderRadius: '4px' }}>Admin</span>
                 </div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255, 255, 255, 0.65)', marginTop: '2px' }}>
-                  All Tasks, No Deletion
+                <div style={{ fontSize: '0.68rem', color: '#cbd5e1', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  amaan@eeeqa.com
                 </div>
               </button>
+            </div>
+
+            {/* Quick Dropdown for All 7 Team Members */}
+            <div style={{ position: 'relative' }}>
+              <select
+                value={selectedUserIndex}
+                onChange={(e) => {
+                  const idx = e.target.value;
+                  setSelectedUserIndex(idx);
+                  if (idx !== '') {
+                    handleQuickFill(DEFAULT_USERS[Number(idx)]);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  background: 'rgba(12, 17, 34, 0.95)',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  borderRadius: '10px',
+                  padding: '0.45rem 2rem 0.45rem 0.75rem',
+                  color: '#cbd5e1',
+                  fontSize: '0.75rem',
+                  fontFamily: 'inherit',
+                  fontWeight: 600,
+                  outline: 'none',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  WebkitAppearance: 'none'
+                }}
+                aria-label="Select Team Member Credential"
+              >
+                <option value="">⚡ Or select team member credential...</option>
+                {DEFAULT_USERS.map((u, i) => (
+                  <option key={u.id} value={i}>
+                    {u.role === 'admin' ? '👑' : '👤'} {u.name} ({u.email}) — {u.role === 'admin' ? 'Admin' : 'User'}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
             </div>
           </div>
 
@@ -239,7 +252,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 <input
                   type="email"
                   required
-                  placeholder="admin@iphub.com or user@iphub.com"
+                  placeholder="Admin@eeeqa.com or user@eeeqa.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{
@@ -260,16 +273,19 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
             {/* Password Field */}
             <div>
-              <label style={{ 
-                display: 'block', 
-                fontSize: '0.72rem', 
-                fontWeight: 700, 
-                color: 'var(--text-secondary)', 
-                marginBottom: '0.35rem',
-                textTransform: 'uppercase'
-              }}>
-                Password
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <label style={{ 
+                  fontSize: '0.72rem', 
+                  fontWeight: 700, 
+                  color: 'var(--text-secondary)', 
+                  textTransform: 'uppercase'
+                }}>
+                  Password
+                </label>
+                <span style={{ fontSize: '0.66rem', color: '#fbbf24', fontFamily: 'monospace' }}>
+                  Default: E3qatech@123!
+                </span>
+              </div>
               <div style={{ position: 'relative' }}>
                 <Lock size={15} style={{ 
                   position: 'absolute', 
@@ -325,7 +341,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
               disabled={isSubmitting}
               className="apple-btn apple-btn-primary"
               style={{
-                marginTop: '0.5rem',
+                marginTop: '0.4rem',
                 padding: '0.75rem',
                 fontSize: '0.88rem',
                 fontWeight: 700,
@@ -339,24 +355,21 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
               }}
             >
               <LogIn size={16} />
-              <span>{isSubmitting ? 'Authenticating...' : 'Sign In to IP HUB'}</span>
+              <span>{isSubmitting ? 'Authenticating...' : 'Sign In to E3 IP HUB'}</span>
             </button>
           </form>
 
-          {/* Security policy footnote (Zero Signup Guarantee) */}
+          {/* Security policy footnote */}
           <div style={{ 
-            marginTop: '1.25rem', 
+            marginTop: '1.15rem', 
             textAlign: 'center', 
             fontSize: '0.7rem', 
             color: 'var(--text-tertiary)',
             borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-            paddingTop: '0.9rem'
+            paddingTop: '0.85rem'
           }}>
             <span>Strict Role-Based Security: </span>
             <strong style={{ color: 'var(--text-secondary)' }}>Normal User cannot delete cards. </strong>
-            <span style={{ display: 'block', marginTop: '3px' }}>
-              Account provisioning exclusively authorized via Admin Panel.
-            </span>
           </div>
 
         </div>
