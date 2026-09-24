@@ -28,9 +28,22 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterVenue, setFilterVenue] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterLeadType, setFilterLeadType] = useState('all'); // 'all' | 'today' | 'core'
   const [selectedIP, setSelectedIP] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Count how many leads were discovered today / daily extracted
+  const todayLeadsCount = useMemo(() => {
+    return ips.filter((ip) => {
+      return (
+        ip.isDailyDiscovered === true ||
+        Boolean(ip.extracted_at) ||
+        Boolean(ip.extracted_date) ||
+        parseInt(ip.id.replace('IP-', ''), 10) > 44
+      );
+    }).length;
+  }, [ips]);
 
   // Persist to localStorage whenever IPs change
   useEffect(() => {
@@ -81,8 +94,21 @@ export default function App() {
         if (!match) return false;
       }
 
-      // 2. Category filter
-      if (filterCategory !== 'all') {
+      // 2. Today's Lead / Origin filter
+      const isTodayLead =
+        ip.isDailyDiscovered === true ||
+        Boolean(ip.extracted_at) ||
+        Boolean(ip.extracted_date) ||
+        parseInt(ip.id.replace('IP-', ''), 10) > 44;
+
+      if (filterLeadType === 'today' || filterCategory === 'today') {
+        if (!isTodayLead) return false;
+      } else if (filterLeadType === 'core') {
+        if (isTodayLead) return false;
+      }
+
+      // 3. Category filter (skip if filterCategory is 'today' since handled above)
+      if (filterCategory !== 'all' && filterCategory !== 'today') {
         const cat = ip.category.toLowerCase();
         if (filterCategory === 'theatrical' && !(cat.includes('stage') || cat.includes('theatrical') || cat.includes('musical') || cat.includes('puppet'))) {
           return false;
@@ -101,7 +127,7 @@ export default function App() {
         }
       }
 
-      // 3. Venue filter
+      // 4. Venue filter
       if (filterVenue !== 'all') {
         const ven = ip.venue_fit.toLowerCase();
         if (filterVenue === 'qncc' && !ven.includes('qncc')) return false;
@@ -112,14 +138,14 @@ export default function App() {
         if (filterVenue === 'aspire' && !(ven.includes('aspire') || ven.includes('al maha') || ven.includes('outdoor'))) return false;
       }
 
-      // 4. Status filter
+      // 5. Status filter
       if (filterStatus !== 'all') {
         if (ip.status !== filterStatus) return false;
       }
 
       return true;
     });
-  }, [ips, searchQuery, filterCategory, filterVenue, filterStatus]);
+  }, [ips, searchQuery, filterCategory, filterVenue, filterStatus, filterLeadType]);
 
   // Update a single IP (e.g. notes, status)
   const handleUpdateIP = (updatedIP) => {
@@ -261,6 +287,10 @@ export default function App() {
         setFilterVenue={setFilterVenue}
         filterStatus={filterStatus}
         setFilterStatus={setFilterStatus}
+        filterLeadType={filterLeadType}
+        setFilterLeadType={setFilterLeadType}
+        todayLeadsCount={todayLeadsCount}
+        onExtractDailyIPs={handleExtractDailyIPs}
         filteredCount={filteredIPs.length}
         totalCount={ips.length}
       />

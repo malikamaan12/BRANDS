@@ -359,7 +359,9 @@ export function extractDailyIPs(existingIPs = [], count = 10) {
       status: 'Not Contacted',
       email_template: emailTemplate,
       notes: candidate.notes,
-      extracted_at: new Date().toISOString()
+      isDailyDiscovered: true,
+      extracted_at: new Date().toISOString(),
+      extracted_date: new Date().toISOString().slice(0, 10)
     };
   });
 
