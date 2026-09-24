@@ -1,0 +1,12 @@
+# Cloudflare Pages Configuration
+name = "doha-entertainment-ip-hub"
+compatibility_date = "2024-09-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# Environment Variables:
+# Set DATABASE_URL in Cloudflare Pages Dashboard under Settings > Environment Variables
+# or use `npx wrangler pages secret put DATABASE_URL`
+# 
+# Example connection string:
+# postgresql://<user>:<password>@<neon-host>/neondb?sslmode=require
