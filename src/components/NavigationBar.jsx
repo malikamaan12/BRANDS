@@ -38,231 +38,141 @@ export default function NavigationBar({
     <header className="nav-header">
       <div className="nav-container">
         
-        {/* Brand Group: IP HUB & E3 Events & Entertainment Enterprises */}
+        {/* Brand Group: E3 IP HUB */}
         <div className="nav-brand">
           <div className="nav-logo-badge" style={{ padding: 0, background: 'transparent', border: 'none' }}>
-            <IpHubLogo size={42} />
+            <IpHubLogo size={36} />
           </div>
           <div className="nav-title-group">
             <h1 className="nav-title">
-              IP HUB
-              <span className="qatar-location-pill">
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b91c49', display: 'inline-block' }}></span>
-                Qatar 2026/2027
-              </span>
+              E3 IP HUB
             </h1>
             <span className="nav-subtitle">
-              Events & Entertainment Enterprises (E3) • Global Live Brand Licensing Directory
+              Live Entertainment & Brand Directory
             </span>
           </div>
         </div>
 
-        {/* Global Action Tools */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+        {/* Global Action Tools - Pure Minimal Icon Buttons */}
+        <div className="nav-actions-group">
           
-          {/* Automated Daily Discovery Button */}
+          {/* Automated Daily Discovery Icon Button */}
           <button 
-            className="apple-btn apple-btn-amber"
+            className="nav-icon-btn amber"
             onClick={onExtractDailyIPs}
-            title="Automated Daily Discovery: Ingest at least 10 brand-new unique entertainment IPs & branded events with zero duplicates"
+            title="Extract Daily Leads (+10 New Properties)"
+            aria-label="Extract Daily Leads"
           >
-            <Zap size={15} style={{ color: '#fbbf24' }} fill="#fbbf24" />
-            <span>Extract Daily (+10)</span>
-            <span className="daily-sync-badge">Daily</span>
+            <Zap size={16} fill="#fbbf24" />
           </button>
 
+          {/* Add IP Lead Icon Button */}
           <button 
-            className="apple-btn apple-btn-primary" 
+            className="nav-icon-btn primary" 
             onClick={onOpenAddModal}
-            title="Register a new entertainment IP lead"
+            title="Add New IP Lead"
+            aria-label="Add IP Lead"
           >
-            <Plus size={16} strokeWidth={2.5} />
-            <span>Add IP Lead</span>
+            <Plus size={18} strokeWidth={2.5} />
           </button>
 
+          {/* Export CSV Icon Button */}
           <button 
-            className="apple-btn apple-btn-glass" 
+            className="nav-icon-btn" 
             onClick={onExportCSV}
             title="Export full portfolio to CSV"
+            aria-label="Export CSV"
           >
-            <FileSpreadsheet size={15} />
-            <span>CSV</span>
+            <FileSpreadsheet size={16} />
           </button>
 
+          {/* Export JSON Icon Button */}
           <button 
-            className="apple-btn apple-btn-glass" 
+            className="nav-icon-btn" 
             onClick={onExportJSON}
             title="Export full portfolio to JSON"
+            aria-label="Export JSON"
           >
-            <Code2 size={15} />
-            <span>JSON</span>
+            <Code2 size={16} />
           </button>
 
+          {/* Reset Data Icon Button */}
           <button 
-            className="apple-btn apple-btn-glass" 
+            className="nav-icon-btn" 
             onClick={onResetData}
-            style={{ padding: '0.55rem' }}
             title="Reset dataset back to original 44 properties"
+            aria-label="Reset Data"
           >
             <RotateCcw size={15} />
           </button>
 
-          {/* ADMIN EXCLUSIVE: Admin Panel Button */}
+          {/* ADMIN EXCLUSIVE: Admin Panel Icon Button */}
           {isAdmin && (
             <button
-              className="apple-btn"
+              className="nav-icon-btn gold"
               onClick={onOpenAdminModal}
-              title="Admin Panel: Manage user accounts & RBAC permissions"
-              style={{
-                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(138, 21, 56, 0.28) 100%)',
-                border: '1px solid rgba(245, 158, 11, 0.45)',
-                color: '#fbbf24',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem'
-              }}
+              title="Admin Control Panel: Manage user accounts & permissions"
+              aria-label="Admin Control Panel"
             >
-              <Settings size={14} className="spin-hover" />
-              <span>Admin Panel</span>
+              <Settings size={16} className="spin-hover" />
             </button>
           )}
 
-          {/* RBAC USER PROFILE PILL & MENU */}
+          {/* RBAC USER PROFILE ICON & DROPDOWN */}
           <div style={{ position: 'relative' }} ref={menuRef}>
             {currentUser ? (
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="apple-btn apple-btn-glass"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.35rem 0.75rem 0.35rem 0.45rem',
-                  borderColor: isAdmin ? 'rgba(245, 158, 11, 0.4)' : 'rgba(6, 182, 212, 0.35)',
-                  background: isAdmin 
-                    ? 'rgba(245, 158, 11, 0.08)' 
-                    : 'rgba(6, 182, 212, 0.08)'
-                }}
-                title={`Logged in as ${currentUser.name} (${isAdmin ? 'Admin: Full Control' : 'Normal User: Cannot Delete Cards'})`}
+                className={`nav-avatar-btn ${isAdmin ? 'admin' : ''}`}
+                title={`${currentUser.name} (${isAdmin ? 'Admin' : 'Normal User'})`}
+                aria-label="User Account Menu"
               >
-                {/* Avatar Icon */}
-                <div style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  background: isAdmin
-                    ? 'linear-gradient(135deg, #f59e0b 0%, #8a1538 100%)'
-                    : 'linear-gradient(135deg, #06b6d4 0%, #6366f1 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                  fontSize: '0.72rem',
-                  fontWeight: 800
-                }}>
-                  {isAdmin ? '👑' : '👤'}
+                <div className="nav-avatar-inner">
+                  {isAdmin ? '👑' : currentUser.name.charAt(0).toUpperCase()}
                 </div>
-
-                <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '0.76rem', fontWeight: 750, color: '#ffffff' }}>
-                    {currentUser.name.split(' ')[0]}
-                  </div>
-                  <div style={{ 
-                    fontSize: '0.62rem', 
-                    color: isAdmin ? '#fbbf24' : '#38bdf8', 
-                    fontWeight: 700,
-                    textTransform: 'uppercase'
-                  }}>
-                    {isAdmin ? 'Admin' : 'Normal User'}
-                  </div>
-                </div>
-
-                <ChevronDown size={13} style={{ color: 'var(--text-tertiary)', marginLeft: '2px' }} />
+                <span className={`nav-avatar-status ${isAdmin ? 'gold' : 'cyan'}`}></span>
               </button>
             ) : (
               <button
                 onClick={onOpenLoginModal}
-                className="apple-btn apple-btn-primary"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.5rem 0.95rem'
-                }}
+                className="nav-icon-btn primary"
+                title="Sign In"
+                aria-label="Sign In"
               >
-                <LogIn size={15} />
-                <span>Sign In</span>
+                <LogIn size={16} />
               </button>
             )}
 
             {/* User Dropdown Menu */}
             {isUserMenuOpen && currentUser && (
-              <div 
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  right: 0,
-                  width: '270px',
-                  background: 'rgba(12, 16, 32, 0.96)',
-                  backdropFilter: 'blur(30px) saturate(200%)',
-                  WebkitBackdropFilter: 'blur(30px) saturate(200%)',
-                  border: '1px solid rgba(255, 255, 255, 0.16)',
-                  borderRadius: '16px',
-                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-                  padding: '0.85rem',
-                  zIndex: 9999,
-                  animation: 'modalSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1)'
-                }}
-              >
+              <div className="nav-user-dropdown">
                 {/* User Info Header */}
-                <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+                <div className="nav-user-dropdown-header">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <div style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: '50%',
-                      background: isAdmin
-                        ? 'linear-gradient(135deg, #f59e0b 0%, #8a1538 100%)'
-                        : 'linear-gradient(135deg, #06b6d4 0%, #6366f1 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      fontSize: '0.82rem',
-                      fontWeight: 800
-                    }}>
+                    <div className={`nav-dropdown-avatar ${isAdmin ? 'admin' : ''}`}>
                       {currentUser.name.charAt(0).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div className="nav-dropdown-username">
                         {currentUser.name}
                       </div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div className="nav-dropdown-email">
                         {currentUser.email}
                       </div>
                     </div>
                   </div>
 
                   {/* Role Permissions Summary */}
-                  <div style={{
-                    marginTop: '0.65rem',
-                    padding: '0.45rem 0.6rem',
-                    borderRadius: '8px',
-                    background: isAdmin ? 'rgba(245, 158, 11, 0.12)' : 'rgba(6, 182, 212, 0.1)',
-                    border: isAdmin ? '1px solid rgba(245, 158, 11, 0.25)' : '1px solid rgba(6, 182, 212, 0.2)',
-                    fontSize: '0.68rem',
-                    color: isAdmin ? '#fbbf24' : '#38bdf8'
-                  }}>
+                  <div className={`nav-dropdown-badge ${isAdmin ? 'admin' : ''}`}>
                     {isAdmin ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <ShieldCheck size={13} style={{ flexShrink: 0 }} />
-                        <span><strong>Admin Access</strong>: Complete control & card deletions enabled.</span>
+                        <span><strong>Admin Access</strong>: Full Control</span>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <Shield size={13} style={{ flexShrink: 0 }} />
-                        <span><strong>Normal User</strong>: All tasks enabled. <em>Cannot delete cards.</em></span>
+                        <span><strong>Normal User</strong>: Card editing enabled</span>
                       </div>
                     )}
                   </div>
@@ -278,21 +188,7 @@ export default function NavigationBar({
                         setIsUserMenuOpen(false);
                         onOpenAdminModal();
                       }}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.55rem',
-                        padding: '0.55rem 0.75rem',
-                        borderRadius: '10px',
-                        background: 'rgba(245, 158, 11, 0.1)',
-                        border: '1px solid rgba(245, 158, 11, 0.2)',
-                        color: '#fbbf24',
-                        cursor: 'pointer',
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
-                        textAlign: 'left'
-                      }}
+                      className="nav-dropdown-action admin"
                     >
                       <Settings size={14} />
                       <span>Open Admin Control Panel</span>
@@ -305,21 +201,7 @@ export default function NavigationBar({
                       setIsUserMenuOpen(false);
                       onOpenLoginModal();
                     }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.55rem',
-                      padding: '0.55rem 0.75rem',
-                      borderRadius: '10px',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      color: 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      fontSize: '0.78rem',
-                      textAlign: 'left'
-                    }}
-                    className="menu-item-hover"
+                    className="nav-dropdown-action"
                   >
                     <UserCheck size={14} />
                     <span>Sign In as Another User</span>
@@ -331,22 +213,7 @@ export default function NavigationBar({
                       setIsUserMenuOpen(false);
                       onLogout();
                     }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.55rem',
-                      padding: '0.55rem 0.75rem',
-                      borderRadius: '10px',
-                      background: 'rgba(239, 68, 68, 0.08)',
-                      border: '1px solid rgba(239, 68, 68, 0.2)',
-                      color: '#f87171',
-                      cursor: 'pointer',
-                      fontSize: '0.78rem',
-                      textAlign: 'left',
-                      marginTop: '0.25rem'
-                    }}
-                    className="menu-item-hover"
+                    className="nav-dropdown-action danger"
                   >
                     <LogOut size={14} />
                     <span>Sign Out</span>

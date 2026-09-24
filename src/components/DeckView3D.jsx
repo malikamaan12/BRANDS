@@ -41,6 +41,24 @@ export default function DeckView3D({
   const [copiedId, setCopiedId] = useState(null);
   const [rotationAngle, setRotationAngle] = useState(-20); // Base rotateY angle
   const timerRef = useRef(null);
+  const filmstripRef = useRef(null);
+
+  // Auto-scroll active capsule into view in the 3D dock
+  useEffect(() => {
+    if (filmstripRef.current && filmstripRef.current.children[activeIndex]) {
+      filmstripRef.current.children[activeIndex].scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+    }
+  }, [activeIndex]);
+
+  const handleTrayWheel = (e) => {
+    if (e.deltaY !== 0) {
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
 
   // Keep active index in bounds if ips array filters change
   useEffect(() => {
@@ -352,8 +370,14 @@ export default function DeckView3D({
 
       </div>
 
-      {/* Quick Filmstrip Thumbnails Carousel at the bottom */}
-      <div className="deck-filmstrip-tray">
+      {/* Quick Filmstrip Thumbnails Carousel at the bottom (3D Dock) */}
+      <div 
+        ref={filmstripRef}
+        onWheel={handleTrayWheel}
+        className="deck-filmstrip-tray"
+        role="region"
+        aria-label="3D Card Dock"
+      >
         {ips.map((ip, i) => {
           const isCurrent = i === activeIndex;
           const theme = getIPTheme(ip);
