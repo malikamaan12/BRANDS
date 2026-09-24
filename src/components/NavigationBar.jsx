@@ -1,8 +1,8 @@
 import React from 'react';
-import { Plus, FileSpreadsheet, Code2, RotateCcw, Zap, Cloud } from 'lucide-react';
+import { Plus, FileSpreadsheet, Code2, RotateCcw, Zap } from 'lucide-react';
 import IpHubLogo from './IpHubLogo';
 
-export default function NavigationBar({ onOpenAddModal, onExportCSV, onExportJSON, onResetData, onExtractDailyIPs, onSyncNeon, isSyncing }) {
+export default function NavigationBar({ onOpenAddModal, onExportCSV, onExportJSON, onResetData, onExtractDailyIPs }) {
   return (
     <header className="nav-header">
       <div className="nav-container">
@@ -29,19 +29,7 @@ export default function NavigationBar({ onOpenAddModal, onExportCSV, onExportJSO
         {/* Global Action Tools */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           
-          {/* Neon Serverless Cloud Sync (Scale-to-Zero Architecture) */}
-          <button 
-            className="apple-btn apple-btn-glass"
-            onClick={onSyncNeon}
-            disabled={isSyncing}
-            style={{ borderColor: 'rgba(56, 189, 248, 0.35)', background: 'rgba(56, 189, 248, 0.08)' }}
-            title="Cloudflare & Neon Serverless: One-shot sync (Stateless HTTP - scales to 0 when idle)"
-          >
-            <Cloud size={15} style={{ color: '#38bdf8' }} className={isSyncing ? 'animate-spin' : ''} />
-            <span style={{ color: '#e0f2fe' }}>{isSyncing ? 'Syncing...' : 'Neon Sync'}</span>
-          </button>
-
-          {/* Automated Daily Extraction Engine Button */}
+          {/* Automated Daily Discovery Button */}
           <button 
             className="apple-btn apple-btn-amber"
             onClick={onExtractDailyIPs}

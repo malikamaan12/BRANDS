@@ -270,8 +270,6 @@ export default function App() {
         onExportJSON={handleExportJSON}
         onResetData={handleResetData}
         onExtractDailyIPs={handleExtractDailyIPs}
-        onSyncNeon={handleSyncNeon}
-        isSyncing={isSyncing}
       />
 
       <StatsOverview ips={ips} />
