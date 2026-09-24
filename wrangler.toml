@@ -1,8 +1,11 @@
-# Cloudflare Pages Configuration
+# Cloudflare Pages / Workers Configuration
 name = "doha-entertainment-ip-hub"
 compatibility_date = "2024-09-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
+
+[assets]
+directory = "./dist"
 
 # Environment Variables:
 # Set DATABASE_URL in Cloudflare Pages Dashboard under Settings > Environment Variables
