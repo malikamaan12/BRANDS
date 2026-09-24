@@ -299,34 +299,7 @@ export default function NavigationBar({
                     </button>
                   )}
 
-                  {/* 1-Click Role Switcher (For Instant RBAC Testing) */}
-                  <button
-                    onClick={() => {
-                      setIsUserMenuOpen(false);
-                      onQuickSwitchRole(isAdmin ? 'user' : 'admin');
-                    }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.55rem',
-                      padding: '0.55rem 0.75rem',
-                      borderRadius: '10px',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      color: 'var(--text-primary)',
-                      cursor: 'pointer',
-                      fontSize: '0.78rem',
-                      textAlign: 'left',
-                      transition: 'background 0.15s ease'
-                    }}
-                    className="menu-item-hover"
-                  >
-                    <KeyRound size={14} style={{ color: 'var(--accent-gold)' }} />
-                    <span>Switch to {isAdmin ? '👤 Normal User' : '👑 Master Admin'}</span>
-                  </button>
-
-                  {/* Switch Account / Login as another */}
+                  {/* Switch Account (requires authentication) */}
                   <button
                     onClick={() => {
                       setIsUserMenuOpen(false);

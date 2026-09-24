@@ -1,5 +1,6 @@
 // ============================================================================
 // IP HUB — Role-Based Access Control (RBAC) & Authentication Service
+// Backed by Neon Serverless PostgreSQL & Local-First Resilient Cache
 // ============================================================================
 // Roles:
 //  - 'admin': Full administrative control. Can delete any IP/brand card,
@@ -12,8 +13,8 @@
 //       Accounts can ONLY be provisioned by an Admin via the Admin Panel.
 // ============================================================================
 
-const USERS_STORAGE_KEY = 'iphub_rbac_users_v1';
-const SESSION_STORAGE_KEY = 'iphub_rbac_session_v1';
+const USERS_STORAGE_KEY = 'iphub_rbac_users_v2';
+const SESSION_STORAGE_KEY = 'iphub_rbac_session_v2';
 
 // Pre-seeded default credentials
 export const DEFAULT_USERS = [
@@ -25,7 +26,8 @@ export const DEFAULT_USERS = [
     role: 'admin',
     title: 'Chief Licensing Officer & Platform Administrator',
     createdAt: '2026-01-15T08:00:00.000Z',
-    isRoot: true
+    isRoot: true,
+    isActive: true
   },
   {
     id: 'usr-licensing-02',
@@ -35,7 +37,8 @@ export const DEFAULT_USERS = [
     role: 'user',
     title: 'Senior Entertainment Licensing Lead',
     createdAt: '2026-02-01T10:00:00.000Z',
-    isRoot: false
+    isRoot: false,
+    isActive: true
   }
 ];
 
@@ -52,16 +55,40 @@ class AuthService {
       if (!stored) {
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
       }
-      
-      // Auto-initialize session if none exists (defaults to Admin for instant evaluation, or can switch)
-      const session = localStorage.getItem(SESSION_STORAGE_KEY);
-      if (!session) {
-        // Default to Master Admin so first-time load works smoothly
-        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(DEFAULT_USERS[0]));
-      }
     } catch (e) {
       console.warn('AuthService storage initialization warning:', e);
     }
+  }
+
+  // Fetch users from Neon PostgreSQL with local fallback
+  async syncUsersFromRemote() {
+    try {
+      const res = await fetch('/api/users', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.users && data.users.length > 0) {
+          const formatted = data.users.map(u => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            password: u.password,
+            role: u.role,
+            title: u.title,
+            isRoot: Boolean(u.is_root),
+            isActive: u.is_active !== false,
+            createdAt: u.created_at
+          }));
+          this.saveUsers(formatted);
+          return formatted;
+        }
+      }
+    } catch (err) {
+      console.warn('[AuthService] Remote user sync fallback to local cache:', err.message);
+    }
+    return this.getUsers();
   }
 
   getUsers() {
@@ -84,17 +111,22 @@ class AuthService {
   }
 
   getCurrentUser() {
-    if (typeof window === 'undefined') return DEFAULT_USERS[0];
+    if (typeof window === 'undefined') return null;
     try {
       const session = localStorage.getItem(SESSION_STORAGE_KEY);
       if (!session) return null;
       const parsed = JSON.parse(session);
-      // Verify user still exists in directory
+      // Verify user still exists in current user directory
       const users = this.getUsers();
       const matched = users.find(u => u.id === parsed.id || u.email.toLowerCase() === parsed.email.toLowerCase());
-      return matched || parsed;
+      if (matched) {
+        const sanitized = { ...matched };
+        delete sanitized.password;
+        return sanitized;
+      }
+      return parsed;
     } catch {
-      return DEFAULT_USERS[0];
+      return null;
     }
   }
 
@@ -102,7 +134,7 @@ class AuthService {
     if (typeof window === 'undefined') return;
     if (user) {
       const sanitized = { ...user };
-      delete sanitized.password; // Do not keep raw password in session
+      delete sanitized.password; // Never keep raw password in session storage
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sanitized));
     } else {
       localStorage.removeItem(SESSION_STORAGE_KEY);
@@ -127,8 +159,15 @@ class AuthService {
       };
     }
 
+    if (user.isActive === false) {
+      return {
+        success: false,
+        error: 'This account has been deactivated. Please contact an administrator.'
+      };
+    }
+
     if (user.password !== trimmedPass) {
-      return { success: false, error: 'Invalid password. Please verify credentials or contact an administrator.' };
+      return { success: false, error: 'Invalid password. Please verify credentials.' };
     }
 
     this.setCurrentUser(user);
@@ -140,7 +179,7 @@ class AuthService {
   }
 
   // Admin-only user provisioning
-  createUser({ name, email, password, role, title }) {
+  async createUser({ name, email, password, role, title }) {
     const trimmedEmail = (email || '').trim().toLowerCase();
     const trimmedName = (name || '').trim();
     const trimmedPass = (password || '').trim();
@@ -170,16 +209,81 @@ class AuthService {
       role: targetRole,
       title: (title || '').trim() || (targetRole === 'admin' ? 'System Administrator' : 'Licensing Specialist'),
       createdAt: new Date().toISOString(),
-      isRoot: false
+      isRoot: false,
+      isActive: true
     };
 
     const updated = [newUser, ...users];
     this.saveUsers(updated);
 
+    // Push to Neon PostgreSQL via Cloudflare API
+    try {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'upsert',
+          user: {
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            password: newUser.password,
+            role: newUser.role,
+            title: newUser.title,
+            is_root: false,
+            is_active: true
+          }
+        })
+      }).catch(() => {});
+    } catch {}
+
     return { success: true, user: newUser };
   }
 
-  deleteUser(userId, currentAdminId) {
+  async updateUser(userId, updates) {
+    const users = this.getUsers();
+    const index = users.findIndex(u => u.id === userId);
+    if (index === -1) {
+      return { success: false, error: 'User not found.' };
+    }
+
+    const target = users[index];
+    const updatedUser = {
+      ...target,
+      name: updates.name ? updates.name.trim() : target.name,
+      role: updates.role ? (updates.role === 'admin' ? 'admin' : 'user') : target.role,
+      title: updates.title !== undefined ? updates.title.trim() : target.title,
+      isActive: updates.isActive !== undefined ? Boolean(updates.isActive) : target.isActive
+    };
+
+    users[index] = updatedUser;
+    this.saveUsers(users);
+
+    // Push to Neon
+    try {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'upsert',
+          user: {
+            id: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            password: updatedUser.password,
+            role: updatedUser.role,
+            title: updatedUser.title,
+            is_root: Boolean(updatedUser.isRoot),
+            is_active: updatedUser.isActive !== false
+          }
+        })
+      }).catch(() => {});
+    } catch {}
+
+    return { success: true, user: updatedUser };
+  }
+
+  async deleteUser(userId, currentAdminId) {
     const users = this.getUsers();
     const target = users.find(u => u.id === userId);
 
@@ -197,11 +301,21 @@ class AuthService {
 
     const updated = users.filter(u => u.id !== userId);
     this.saveUsers(updated);
+
+    // Push delete to Neon
+    try {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', userId })
+      }).catch(() => {});
+    } catch {}
+
     return { success: true };
   }
 
-  updateUserPassword(userId, newPassword) {
-    if (!newPassword || newPassword.length < 6) {
+  async updateUserPassword(userId, newPassword) {
+    if (!newPassword || newPassword.trim().length < 6) {
       return { success: false, error: 'Password must be at least 6 characters.' };
     }
 
@@ -213,6 +327,20 @@ class AuthService {
 
     users[index].password = newPassword.trim();
     this.saveUsers(users);
+
+    // Push password update to Neon
+    try {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_password',
+          userId,
+          newPassword: newPassword.trim()
+        })
+      }).catch(() => {});
+    } catch {}
+
     return { success: true };
   }
 
@@ -226,7 +354,6 @@ class AuthService {
   }
 
   canPerformOperationalTasks(user) {
-    // Both standard users and admins can perform operational tasks
     return Boolean(user && (user.role === 'user' || user.role === 'admin'));
   }
 }

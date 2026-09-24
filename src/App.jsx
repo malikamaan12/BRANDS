@@ -13,6 +13,7 @@ import VenuesMatrix from './components/VenuesMatrix';
 import IPDossierModal from './components/IPDossierModal';
 import AddIPModal from './components/AddIPModal';
 import LoginModal from './components/LoginModal';
+import LoginScreen from './components/LoginScreen';
 import AdminPanelModal from './components/AdminPanelModal';
 import Toast from './components/Toast';
 import { authService, DEFAULT_USERS } from './services/authService';
@@ -288,18 +289,18 @@ export default function App() {
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
-    showToast(`Authenticated as ${user.name} (${user.role === 'admin' ? '👑 Admin' : '👤 Normal User'})`);
+    showToast(`Welcome back, ${user.name}! (${user.role === 'admin' ? '👑 Master Admin' : '👤 Normal User'})`);
   };
 
-  const handleQuickSwitchRole = (targetRole) => {
-    const users = authService.getUsers();
-    const matched = users.find((u) => u.role === targetRole) || DEFAULT_USERS.find((u) => u.role === targetRole);
-    if (matched) {
-      authService.setCurrentUser(matched);
-      setCurrentUser(matched);
-      showToast(`Active Role: ${matched.name} (${targetRole === 'admin' ? '👑 Admin: Full Control & Deletion' : '👤 Normal User: All Tasks, No Deletion'})`);
-    }
-  };
+  // If user is not authenticated, render the dedicated Login Gateway
+  if (!currentUser) {
+    return (
+      <>
+        <Toast message={toastMessage} />
+        <LoginScreen onLoginSuccess={handleLoginSuccess} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -315,7 +316,6 @@ export default function App() {
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
         onLogout={handleLogout}
-        onQuickSwitchRole={handleQuickSwitchRole}
       />
 
       <StatsOverview ips={ips} />

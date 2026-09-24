@@ -44,3 +44,23 @@ CREATE TRIGGER trigger_update_ips_timestamp
     BEFORE UPDATE ON entertainment_ips
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- =========================================================================
+-- Role-Based Access Control (RBAC) Users Table
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS iphub_users (
+    id VARCHAR(64) PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    role VARCHAR(32) NOT NULL DEFAULT 'user',
+    title TEXT,
+    is_root BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON iphub_users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON iphub_users(role);
+
