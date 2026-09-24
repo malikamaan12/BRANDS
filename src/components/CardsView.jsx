@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Copy, Check, ArrowUpRight, ExternalLink, MapPin, 
   Sparkles, Compass, Gamepad2, Flame, Trophy, Palette, 
-  Music, Theater, Globe, Play, Share2, Layers
+  Music, Theater, Globe, Play, Share2, Layers, Trash2, Lock
 } from 'lucide-react';
 import FrostedHexagon from './FrostedHexagon';
 
@@ -11,10 +11,14 @@ export default function CardsView({
   onOpenDossier, 
   onOpenPitch, 
   onUpdateStatus, 
-  onShowToast 
+  onShowToast,
+  currentUser,
+  onDeleteIP
 }) {
   const [copiedId, setCopiedId] = useState(null);
   const [activeVenueIP, setActiveVenueIP] = useState(null);
+
+  const isAdmin = currentUser?.role === 'admin';
 
   const handleQuickCopy = (e, ip) => {
     e.stopPropagation();
@@ -22,6 +26,17 @@ export default function CardsView({
     setCopiedId(ip.id);
     onShowToast(`Pitch email copied for ${ip.title}`);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDeleteClick = (e, ip) => {
+    e.stopPropagation();
+    if (isAdmin) {
+      if (confirm(`Are you sure you want to permanently delete "${ip.title}" (${ip.id}) from the IP HUB portfolio?`)) {
+        onDeleteIP(ip.id);
+      }
+    } else {
+      onShowToast('🔒 Action Restricted: Normal users cannot delete cards. Administrator access required.');
+    }
   };
 
   if (ips.length === 0) {
@@ -229,6 +244,21 @@ export default function CardsView({
                     aria-label="View dossier"
                   >
                     <ExternalLink size={15} />
+                  </button>
+
+                  {/* RBAC Delete Property Button (Admin can delete; Normal User is restricted) */}
+                  <button 
+                    className="apple-arrow-btn"
+                    onClick={(e) => handleDeleteClick(e, ip)}
+                    title={isAdmin ? `Delete "${ip.title}" (Admin Exclusive)` : `Deletion Restricted: Normal users cannot delete properties (Admin only)`}
+                    aria-label={isAdmin ? 'Delete property' : 'Delete property (Restricted)'}
+                    style={{
+                      borderColor: isAdmin ? 'rgba(239, 68, 68, 0.35)' : 'rgba(255, 255, 255, 0.1)',
+                      background: isAdmin ? 'rgba(239, 68, 68, 0.14)' : 'rgba(255, 255, 255, 0.04)',
+                      color: isAdmin ? '#f87171' : 'var(--text-tertiary)'
+                    }}
+                  >
+                    {isAdmin ? <Trash2 size={14} /> : <Lock size={13} />}
                   </button>
                 </div>
 

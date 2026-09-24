@@ -2754,3 +2754,60 @@ body::after {
     height: 165px;
   }
 }
+
+/* ==========================================================================
+   RBAC & Authentication Design System Tokens
+   ========================================================================== */
+.quick-role-chip:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.menu-item-hover:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.apple-input-focus:focus {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.apple-btn-delete-active:hover {
+  background: rgba(239, 68, 68, 0.28) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  color: #ffffff !important;
+  transform: scale(1.06);
+}
+
+.apple-btn-delete-locked:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #e2e8f0 !important;
+  transform: scale(1.04);
+}
+
+@keyframes modalSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .rbac-login-modal {
+    width: 95% !important;
+    margin: 1rem auto;
+  }
+
+  .rbac-admin-modal {
+    width: 96% !important;
+    max-height: 92vh !important;
+  }
+}

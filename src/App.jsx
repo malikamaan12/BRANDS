@@ -12,11 +12,17 @@ import KanbanView from './components/KanbanView';
 import VenuesMatrix from './components/VenuesMatrix';
 import IPDossierModal from './components/IPDossierModal';
 import AddIPModal from './components/AddIPModal';
+import LoginModal from './components/LoginModal';
+import AdminPanelModal from './components/AdminPanelModal';
 import Toast from './components/Toast';
+import { authService, DEFAULT_USERS } from './services/authService';
 
 export default function App() {
   const [ips, setIps] = useState(() => loadIPs());
   const [isSyncing, setIsSyncing] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('view');
@@ -260,6 +266,41 @@ export default function App() {
     }
   };
 
+  // RBAC Property Deletion: Admin has full control; Normal User is restricted
+  const handleDeleteIP = (ipId) => {
+    if (!authService.canDeleteIP(currentUser)) {
+      showToast('🔒 Action Restricted: Normal users cannot delete cards. Administrator access required.');
+      return;
+    }
+    const target = ips.find((item) => item.id === ipId);
+    setIps((prev) => prev.filter((item) => item.id !== ipId));
+    if (selectedIP && selectedIP.id === ipId) {
+      setSelectedIP(null);
+    }
+    showToast(`Deleted property: ${target?.title || ipId}`);
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+    showToast('Signed out of IP HUB.');
+  };
+
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    showToast(`Authenticated as ${user.name} (${user.role === 'admin' ? '👑 Admin' : '👤 Normal User'})`);
+  };
+
+  const handleQuickSwitchRole = (targetRole) => {
+    const users = authService.getUsers();
+    const matched = users.find((u) => u.role === targetRole) || DEFAULT_USERS.find((u) => u.role === targetRole);
+    if (matched) {
+      authService.setCurrentUser(matched);
+      setCurrentUser(matched);
+      showToast(`Active Role: ${matched.name} (${targetRole === 'admin' ? '👑 Admin: Full Control & Deletion' : '👤 Normal User: All Tasks, No Deletion'})`);
+    }
+  };
+
   return (
     <>
       <Toast message={toastMessage} />
@@ -270,6 +311,11 @@ export default function App() {
         onExportJSON={handleExportJSON}
         onResetData={handleResetData}
         onExtractDailyIPs={handleExtractDailyIPs}
+        currentUser={currentUser}
+        onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        onLogout={handleLogout}
+        onQuickSwitchRole={handleQuickSwitchRole}
       />
 
       <StatsOverview ips={ips} />
@@ -305,6 +351,8 @@ export default function App() {
               showToast(`Status updated to "${newStatus}"`);
             }}
             onShowToast={showToast}
+            currentUser={currentUser}
+            onDeleteIP={handleDeleteIP}
           />
         )}
 
@@ -327,6 +375,9 @@ export default function App() {
             ips={filteredIPs}
             onOpenDossier={(ip) => setSelectedIP(ip)}
             onOpenPitch={(ip) => setSelectedIP(ip)}
+            currentUser={currentUser}
+            onDeleteIP={handleDeleteIP}
+            onShowToast={showToast}
           />
         )}
 
@@ -352,12 +403,27 @@ export default function App() {
         onClose={() => setSelectedIP(null)}
         onUpdateIP={handleUpdateIP}
         onShowToast={showToast}
+        currentUser={currentUser}
+        onDeleteIP={handleDeleteIP}
       />
 
       <AddIPModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddIP={handleAddIP}
+      />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
+      <AdminPanelModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        currentUser={currentUser}
+        onShowToast={showToast}
       />
     </>
   );

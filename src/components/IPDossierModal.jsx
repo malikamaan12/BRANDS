@@ -2,18 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Copy, Check, Send, ExternalLink, Mail, Building, User, 
   MapPin, Sparkles, FileText, NotebookText, ArrowUpRight, 
-  Globe, Award, Calendar, CheckCircle2, ChevronRight, Share2, Layers, Play
+  Globe, Award, Calendar, CheckCircle2, ChevronRight, Share2, Layers, Play,
+  Trash2, Lock
 } from 'lucide-react';
 import FrostedHexagon from './FrostedHexagon';
 import { getIPTheme, getCategoryFallbackImage } from './CardsView';
 
-export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast }) {
+export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast, currentUser, onDeleteIP }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'pitch' | 'notes'
   const [copiedPitch, setCopiedPitch] = useState(false);
   const [copiedSubject, setCopiedSubject] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [notes, setNotes] = useState(ip?.notes || '');
   const [status, setStatus] = useState(ip?.status || 'Not Contacted');
+
+  const isAdmin = currentUser?.role === 'admin';
+
+  const handleDeleteProperty = () => {
+    if (isAdmin) {
+      if (confirm(`Are you sure you want to permanently delete "${ip.title}" (${ip.id}) from the IP HUB portfolio?`)) {
+        onDeleteIP(ip.id);
+        onClose();
+      }
+    } else {
+      onShowToast('🔒 Action Restricted: Normal users cannot delete cards. Administrator access required.');
+    }
+  };
 
   useEffect(() => {
     if (ip) {
@@ -146,6 +160,27 @@ export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast })
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {/* RBAC Delete Property Button */}
+            <button 
+              className="apple-btn"
+              onClick={handleDeleteProperty}
+              title={isAdmin ? `Delete "${ip.title}" (Admin Exclusive)` : `Deletion restricted: Normal users cannot delete cards (Admin only)`}
+              style={{
+                background: isAdmin ? 'rgba(239, 68, 68, 0.14)' : 'rgba(255, 255, 255, 0.04)',
+                border: isAdmin ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
+                color: isAdmin ? '#f87171' : 'var(--text-tertiary)',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.74rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                cursor: 'pointer'
+              }}
+            >
+              {isAdmin ? <Trash2 size={13} /> : <Lock size={12} />}
+              <span>{isAdmin ? 'Delete IP' : 'Delete (Admin Only)'}</span>
+            </button>
+
             <span className="qatar-location-pill" style={{ fontSize: '0.7rem', padding: '0.15rem 0.55rem' }}>
               Doha Host CRM
             </span>

@@ -1,7 +1,9 @@
 import React from 'react';
-import { ExternalLink, Mail } from 'lucide-react';
+import { ExternalLink, Mail, Trash2, Lock } from 'lucide-react';
 
-export default function TableView({ ips, onOpenDossier, onOpenPitch }) {
+export default function TableView({ ips, onOpenDossier, onOpenPitch, currentUser, onDeleteIP, onShowToast }) {
+  const isAdmin = currentUser?.role === 'admin';
+
   if (ips.length === 0) {
     return (
       <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
@@ -81,6 +83,31 @@ export default function TableView({ ips, onOpenDossier, onOpenPitch }) {
                     >
                       <Mail size={12} />
                       <span>Pitch</span>
+                    </button>
+
+                    {/* RBAC Delete Property Button */}
+                    <button 
+                      className="apple-btn"
+                      style={{ 
+                        padding: '0.35rem 0.55rem', 
+                        fontSize: '0.76rem',
+                        background: isAdmin ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                        border: isAdmin ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        color: isAdmin ? '#f87171' : 'var(--text-tertiary)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => {
+                        if (isAdmin) {
+                          if (confirm(`Permanently delete "${ip.title}" (${ip.id}) from the IP HUB portfolio?`)) {
+                            onDeleteIP(ip.id);
+                          }
+                        } else {
+                          onShowToast && onShowToast('🔒 Action Restricted: Normal users cannot delete cards. Administrator access required.');
+                        }
+                      }}
+                      title={isAdmin ? `Delete "${ip.title}" (Admin Only)` : `Deletion restricted: Normal users cannot delete cards`}
+                    >
+                      {isAdmin ? <Trash2 size={12} /> : <Lock size={11} />}
                     </button>
                   </div>
                 </td>
