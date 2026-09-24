@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { 
   X, Lock, Mail, ShieldCheck, Eye, EyeOff, 
-  LogIn, AlertCircle, KeyRound, ChevronDown 
+  LogIn, AlertCircle 
 } from 'lucide-react';
 import IpHubLogo from './IpHubLogo';
-import { authService, DEFAULT_USERS } from '../services/authService';
+import { authService } from '../services/authService';
 
 export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -12,7 +12,6 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedUserIndex, setSelectedUserIndex] = useState('');
 
   if (!isOpen) return null;
 
@@ -32,11 +31,6 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
-  const handleQuickFill = (userObj) => {
-    setErrorMsg('');
-    setEmail(userObj.email);
-    setPassword(userObj.password);
-  };
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -100,111 +94,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         {/* Modal Body */}
         <div style={{ padding: '1.4rem' }}>
           
-          {/* Quick-Fill Credentials Bar */}
-          <div style={{ marginBottom: '1.15rem' }}>
-            <div style={{ 
-              fontSize: '0.68rem', 
-              fontWeight: 700, 
-              color: 'var(--text-tertiary)', 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.04em',
-              marginBottom: '0.45rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem'
-            }}>
-              <KeyRound size={12} style={{ color: 'var(--accent-gold)' }} />
-              <span>1-Click Test Roles:</span>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem', marginBottom: '0.55rem' }}>
-              <button
-                type="button"
-                onClick={() => handleQuickFill(DEFAULT_USERS[0])}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(138, 21, 56, 0.18) 100%)',
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  borderRadius: '12px',
-                  padding: '0.55rem 0.7rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.18s ease'
-                }}
-                className="quick-role-chip"
-                title="Admin@eeeqa.com (Master Admin)"
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#fbbf24' }}>👑 Admin</span>
-                  <span style={{ fontSize: '0.58rem', color: '#fef3c7', background: 'rgba(245, 158, 11, 0.25)', padding: '1px 5px', borderRadius: '4px' }}>Full</span>
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#cbd5e1', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  Admin@eeeqa.com
-                </div>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => handleQuickFill(DEFAULT_USERS[1])}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(138, 21, 56, 0.18) 100%)',
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  borderRadius: '12px',
-                  padding: '0.55rem 0.7rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.18s ease'
-                }}
-                className="quick-role-chip"
-                title="amaan@eeeqa.com (Amaan Malik - Admin)"
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#fbbf24' }}>👑 Amaan</span>
-                  <span style={{ fontSize: '0.58rem', color: '#fef3c7', background: 'rgba(245, 158, 11, 0.25)', padding: '1px 5px', borderRadius: '4px' }}>Admin</span>
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#cbd5e1', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  amaan@eeeqa.com
-                </div>
-              </button>
-            </div>
-
-            {/* Quick Dropdown for All 7 Team Members */}
-            <div style={{ position: 'relative' }}>
-              <select
-                value={selectedUserIndex}
-                onChange={(e) => {
-                  const idx = e.target.value;
-                  setSelectedUserIndex(idx);
-                  if (idx !== '') {
-                    handleQuickFill(DEFAULT_USERS[Number(idx)]);
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  background: 'rgba(12, 17, 34, 0.95)',
-                  border: '1px solid rgba(255, 255, 255, 0.14)',
-                  borderRadius: '10px',
-                  padding: '0.45rem 2rem 0.45rem 0.75rem',
-                  color: '#cbd5e1',
-                  fontSize: '0.75rem',
-                  fontFamily: 'inherit',
-                  fontWeight: 600,
-                  outline: 'none',
-                  cursor: 'pointer',
-                  appearance: 'none',
-                  WebkitAppearance: 'none'
-                }}
-                aria-label="Select Team Member Credential"
-              >
-                <option value="">⚡ Or select team member credential...</option>
-                {DEFAULT_USERS.map((u, i) => (
-                  <option key={u.id} value={i}>
-                    {u.role === 'admin' ? '👑' : '👤'} {u.name} ({u.email}) — {u.role === 'admin' ? 'Admin' : 'User'}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
-            </div>
-          </div>
 
           {/* Error Banner */}
           {errorMsg && (
@@ -252,7 +142,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 <input
                   type="email"
                   required
-                  placeholder="Admin@eeeqa.com or user@eeeqa.com"
+                  autoComplete="username"
+                  placeholder="name@eeeqa.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{
@@ -273,7 +164,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
             {/* Password Field */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+              <div style={{ marginBottom: '0.35rem' }}>
                 <label style={{ 
                   fontSize: '0.72rem', 
                   fontWeight: 700, 
@@ -282,9 +173,6 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 }}>
                   Password
                 </label>
-                <span style={{ fontSize: '0.66rem', color: '#fbbf24', fontFamily: 'monospace' }}>
-                  Default: E3qatech@123!
-                </span>
               </div>
               <div style={{ position: 'relative' }}>
                 <Lock size={15} style={{ 
@@ -298,7 +186,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="Enter your security password"
+                  autoComplete="current-password"
+                  placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{
