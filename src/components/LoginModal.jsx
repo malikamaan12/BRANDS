@@ -69,16 +69,16 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <IpHubLogo size={32} />
+            <IpHubLogo size={36} />
             <div>
               <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <span>IP HUB Credentials</span>
                 <span className="qatar-location-pill" style={{ padding: '0.15rem 0.5rem', fontSize: '0.62rem' }}>
-                  RBAC
+                  E3 RBAC
                 </span>
               </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                Role-Based Access Control
+                Events & Entertainment Enterprises
               </div>
             </div>
           </div>

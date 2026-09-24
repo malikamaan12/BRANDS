@@ -5,6 +5,7 @@ import {
   Lock, Sparkles, Building2, UserX
 } from 'lucide-react';
 import { authService } from '../services/authService';
+import IpHubLogo from './IpHubLogo';
 
 export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowToast }) {
   const [users, setUsers] = useState([]);
@@ -121,20 +122,7 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
           background: 'rgba(255, 255, 255, 0.02)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(138, 21, 56, 0.35) 100%)',
-              border: '1px solid rgba(245, 158, 11, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fbbf24'
-            }}>
-              <ShieldCheck size={20} />
-            </div>
-
+            <IpHubLogo size={36} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.12rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', margin: 0 }}>

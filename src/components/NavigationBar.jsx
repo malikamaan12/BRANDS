@@ -38,10 +38,10 @@ export default function NavigationBar({
     <header className="nav-header">
       <div className="nav-container">
         
-        {/* Brand Group: IP HUB */}
+        {/* Brand Group: IP HUB & E3 Events & Entertainment Enterprises */}
         <div className="nav-brand">
           <div className="nav-logo-badge" style={{ padding: 0, background: 'transparent', border: 'none' }}>
-            <IpHubLogo size={38} />
+            <IpHubLogo size={42} />
           </div>
           <div className="nav-title-group">
             <h1 className="nav-title">
@@ -52,7 +52,7 @@ export default function NavigationBar({
               </span>
             </h1>
             <span className="nav-subtitle">
-              Global Entertainment & Live Brand Licensing Directory
+              Events & Entertainment Enterprises (E3) • Global Live Brand Licensing Directory
             </span>
           </div>
         </div>
