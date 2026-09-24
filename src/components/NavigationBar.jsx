@@ -1,26 +1,27 @@
 import React from 'react';
-import { Sparkles, Plus, FileSpreadsheet, Code2, RotateCcw, Zap, Cloud } from 'lucide-react';
+import { Plus, FileSpreadsheet, Code2, RotateCcw, Zap, Cloud } from 'lucide-react';
+import IpHubLogo from './IpHubLogo';
 
 export default function NavigationBar({ onOpenAddModal, onExportCSV, onExportJSON, onResetData, onExtractDailyIPs, onSyncNeon, isSyncing }) {
   return (
     <header className="nav-header">
       <div className="nav-container">
         
-        {/* Brand Group */}
+        {/* Brand Group: IP HUB */}
         <div className="nav-brand">
-          <div className="nav-logo-badge">
-            <Sparkles size={24} />
+          <div className="nav-logo-badge" style={{ padding: 0, background: 'transparent', border: 'none' }}>
+            <IpHubLogo size={38} />
           </div>
           <div className="nav-title-group">
             <h1 className="nav-title">
-              Doha Live IP Hub
+              IP HUB
               <span className="qatar-location-pill">
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f87171', display: 'inline-block' }}></span>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b91c49', display: 'inline-block' }}></span>
                 Qatar 2026/2027
               </span>
             </h1>
             <span className="nav-subtitle">
-              Host Partnership CRM • visionOS Glass Edition
+              Global Entertainment & Live Brand Licensing Directory
             </span>
           </div>
         </div>

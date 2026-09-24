@@ -1,13 +1,13 @@
-# Doha Live IP Hub 🇶🇦 
-### VisionOS Glassmorphism CRM & Entertainment Host Partnership Engine
+# IP HUB 🇶🇦 
+### Global Entertainment & Live Brand Licensing Directory
 
-An Apple-style, high-performance Entertainment IP CRM built for scouting, evaluating, and securing world-class touring theatricals, immersive exhibitions, motorsport spectacles, and family entertainment properties for premier Qatar venues (QNCC, DECC, Lusail Multipurpose Arena, Katara Cultural Village, Place Vendôme, and Aspire Zone).
+A high-performance Entertainment IP discovery directory and host partnership pipeline built for scouting, evaluating, and securing world-class touring theatricals, immersive exhibitions, motorsport spectacles, and family entertainment properties for premier Qatar venues (QNCC, DECC, Lusail Multipurpose Arena, Katara Cultural Village, Place Vendôme, and Aspire Zone).
 
 ---
 
 ## ✨ Features
 
-- **Apple VisionOS Spatial UI**: Translucent glassmorphism cards, blurred depth layers, specular highlights, and micro-interactions.
+- **Executive Spatial Interface**: Refined translucent glass materials, blurred depth layers, specular highlights, and fluid micro-interactions.
 - **Strict 4-Card Desktop Layout**: 4 columns on desktop (`grid-template-columns: repeat(4, 1fr)`), 2 columns on tablet, and fluid 1-column layout on mobile.
 - **1-Screen Spatial Dossier Modal**: Clean, scroll-free desktop view fitted within the viewport (`max-height: 88vh; overflow: hidden`) with tabbed Pitch & Strategy studios.
 - **1-Click Links & Interactive Venue Popover**: Direct 1-click links to Official Websites and LinkedIn Licensor profiles, plus an interactive `📍 Venue` popover revealing technical specs and seating capacities.
