@@ -18,12 +18,7 @@ export default function LoginScreen({ onLoginSuccess }) {
     setErrorMsg('');
     setIsSubmitting(true);
 
-    // Sync latest users in case created remotely
-    try {
-      await authService.syncUsersFromRemote();
-    } catch {}
-
-    const res = authService.login(email, password);
+    const res = await authService.loginAsync(email, password);
     setIsSubmitting(false);
 
     if (res.success) {

@@ -898,7 +898,7 @@ export function loadIPs() {
               ...init,
               ...item,
               // Always guarantee enriched fields & verified images
-              image: init.image || item.image,
+              image: item.image || init.image,
               brand_details: item.brand_details || init.brand_details,
               past_show_url: item.past_show_url || init.past_show_url,
               linkedin_url: item.linkedin_url || init.linkedin_url,

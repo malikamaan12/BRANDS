@@ -104,7 +104,8 @@ export default function DeckView3D({
 
   const handleQuickCopy = (e, ip) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(ip.email_template);
+    const pitchText = ip.email_template || `Subject: Host Partnership Inquiry: ${ip.title} in Doha, Qatar\n\nDear ${ip.producer || ip.licensor} Team,\n\nWe are exploring bringing ${ip.title} to Doha, Qatar.\n\nBest regards,`;
+    navigator.clipboard.writeText(pitchText);
     setCopiedId(ip.id);
     onShowToast(`Pitch email copied for ${ip.title}`);
     setTimeout(() => setCopiedId(null), 2000);
@@ -263,7 +264,7 @@ export default function DeckView3D({
                   {/* Top Badges */}
                   <div className="deck-card-top-bar">
                     <span className="deck-id-tag">{ip.id}</span>
-                    <span className="deck-scale-tag">{ip.category.split('/')[0].trim()}</span>
+                    <span className="deck-scale-tag">{(ip.category || 'Entertainment').split('/')[0].trim()}</span>
                   </div>
 
                   {/* 3D Frosted Hexagon Emblem (Image 2) */}

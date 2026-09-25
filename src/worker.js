@@ -15,7 +15,7 @@ export default {
           status: 204,
           headers: {
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization'
           }
         });
@@ -35,11 +35,37 @@ export default {
       try {
         const sql = neon(env.DATABASE_URL);
 
+        // Ensure table has email_template column
+        await sql`
+          CREATE TABLE IF NOT EXISTS entertainment_ips (
+            id VARCHAR(64) PRIMARY KEY,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL,
+            image TEXT,
+            licensor TEXT,
+            producer TEXT,
+            person TEXT,
+            email TEXT,
+            website TEXT,
+            linkedin_url TEXT,
+            social TEXT,
+            past_shows TEXT,
+            past_show_url TEXT,
+            venue_fit TEXT,
+            brand_details JSONB DEFAULT '{}'::jsonb,
+            status VARCHAR(32) DEFAULT 'Prospect',
+            email_template TEXT,
+            notes TEXT,
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+          );
+        `;
+
         if (request.method === 'GET') {
           const rows = await sql`
             SELECT id, title, category, image, licensor, producer, person, email, 
                    website, linkedin_url, social, past_shows, past_show_url, 
-                   venue_fit, brand_details, status, notes, updated_at
+                   venue_fit, brand_details, status, email_template, notes, updated_at
             FROM entertainment_ips
             ORDER BY updated_at DESC
           `;
@@ -53,11 +79,12 @@ export default {
           const payload = await request.json();
           const items = Array.isArray(payload) ? payload : [payload];
           for (const item of items) {
+            const venueStr = typeof item.venue_fit === 'string' ? item.venue_fit : JSON.stringify(item.venue_fit || '');
             await sql`
               INSERT INTO entertainment_ips (
                 id, title, category, image, licensor, producer, person, email,
                 website, linkedin_url, social, past_shows, past_show_url,
-                venue_fit, brand_details, status, notes, updated_at
+                venue_fit, brand_details, status, email_template, notes, updated_at
               ) VALUES (
                 ${item.id},
                 ${item.title || ''},
@@ -72,9 +99,10 @@ export default {
                 ${item.social || ''},
                 ${item.past_shows || ''},
                 ${item.past_show_url || ''},
-                ${JSON.stringify(item.venue_fit || [])}::jsonb,
+                ${venueStr},
                 ${JSON.stringify(item.brand_details || {})}::jsonb,
                 ${item.status || 'Prospect'},
+                ${item.email_template || ''},
                 ${item.notes || ''},
                 NOW()
               )
@@ -94,12 +122,34 @@ export default {
                 venue_fit = EXCLUDED.venue_fit,
                 brand_details = EXCLUDED.brand_details,
                 status = EXCLUDED.status,
+                email_template = EXCLUDED.email_template,
                 notes = EXCLUDED.notes,
                 updated_at = NOW();
             `;
           }
           return new Response(JSON.stringify({ success: true, count: items.length }), {
             status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        }
+
+        if (request.method === 'DELETE') {
+          let idToDelete = url.searchParams.get('id');
+          if (!idToDelete) {
+            try {
+              const body = await request.json();
+              idToDelete = body.id;
+            } catch {}
+          }
+          if (idToDelete) {
+            await sql`DELETE FROM entertainment_ips WHERE id = ${idToDelete}`;
+            return new Response(JSON.stringify({ success: true, deleted: idToDelete }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+          }
+          return new Response(JSON.stringify({ error: 'Missing ID for deletion' }), {
+            status: 400,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
         }
@@ -138,11 +188,12 @@ export default {
 
         if (count === 0 && items.length > 0) {
           for (const item of items) {
+            const venueStr = typeof item.venue_fit === 'string' ? item.venue_fit : JSON.stringify(item.venue_fit || '');
             await sql`
               INSERT INTO entertainment_ips (
                 id, title, category, image, licensor, producer, person, email,
                 website, linkedin_url, social, past_shows, past_show_url,
-                venue_fit, brand_details, status, notes, updated_at
+                venue_fit, brand_details, status, email_template, notes, updated_at
               ) VALUES (
                 ${item.id},
                 ${item.title || ''},
@@ -157,9 +208,10 @@ export default {
                 ${item.social || ''},
                 ${item.past_shows || ''},
                 ${item.past_show_url || ''},
-                ${JSON.stringify(item.venue_fit || [])}::jsonb,
+                ${venueStr},
                 ${JSON.stringify(item.brand_details || {})}::jsonb,
                 ${item.status || 'Prospect'},
+                ${item.email_template || ''},
                 ${item.notes || ''},
                 NOW()
               ) ON CONFLICT (id) DO NOTHING;
@@ -170,7 +222,7 @@ export default {
         const remoteIps = await sql`
           SELECT id, title, category, image, licensor, producer, person, email, 
                  website, linkedin_url, social, past_shows, past_show_url, 
-                 venue_fit, brand_details, status, notes, updated_at
+                 venue_fit, brand_details, status, email_template, notes, updated_at
           FROM entertainment_ips
           ORDER BY updated_at DESC
         `;
@@ -232,7 +284,7 @@ export default {
         `;
 
         if (request.method === 'GET') {
-          // Ensure all 7 official E3 team credentials exist in Neon
+          // Seed defaults ONLY if they do not exist; NEVER overwrite passwords on conflict!
           await sql`
             INSERT INTO iphub_users (id, name, email, password, role, title, is_root, is_active)
             VALUES 
@@ -246,7 +298,6 @@ export default {
             ON CONFLICT (id) DO UPDATE SET
               name = EXCLUDED.name,
               email = EXCLUDED.email,
-              password = EXCLUDED.password,
               role = EXCLUDED.role,
               title = EXCLUDED.title,
               updated_at = NOW();
@@ -255,8 +306,9 @@ export default {
           // Remove legacy placeholder records
           await sql`DELETE FROM iphub_users WHERE email IN ('admin@iphub.com', 'user@iphub.com');`;
 
+          // CRITICAL SECURITY FIX: NEVER return plaintext passwords to client!
           const rows = await sql`
-            SELECT id, name, email, password, role, title, is_root, is_active, created_at, updated_at
+            SELECT id, name, email, role, title, is_root, is_active, created_at, updated_at
             FROM iphub_users
             ORDER BY created_at ASC
           `;
@@ -268,7 +320,29 @@ export default {
 
         if (request.method === 'POST') {
           const body = await request.json();
-          const { action, user, userId, newPassword } = body;
+          const { action, user, userId, newPassword, email, password } = body;
+
+          // Secure login action
+          if (action === 'login' && email && password) {
+            const trimmedEmail = email.trim().toLowerCase();
+            const trimmedPass = password.trim();
+            const foundUsers = await sql`
+              SELECT id, name, email, role, title, is_root, is_active
+              FROM iphub_users
+              WHERE LOWER(email) = ${trimmedEmail} AND password = ${trimmedPass} AND is_active = true
+              LIMIT 1
+            `;
+            if (foundUsers.length > 0) {
+              return new Response(JSON.stringify({ success: true, user: foundUsers[0] }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+              });
+            }
+            return new Response(JSON.stringify({ success: false, error: 'Invalid corporate email or password.' }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+          }
 
           if (action === 'delete' && userId) {
             await sql`DELETE FROM iphub_users WHERE id = ${userId} AND is_root = false`;
@@ -279,7 +353,7 @@ export default {
           }
 
           if (action === 'update_password' && userId && newPassword) {
-            await sql`UPDATE iphub_users SET password = ${newPassword}, updated_at = NOW() WHERE id = ${userId}`;
+            await sql`UPDATE iphub_users SET password = ${newPassword.trim()}, updated_at = NOW() WHERE id = ${userId}`;
             return new Response(JSON.stringify({ success: true, updated: userId }), {
               status: 200,
               headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
@@ -293,7 +367,7 @@ export default {
                 ${user.id},
                 ${user.name},
                 ${user.email.toLowerCase()},
-                ${user.password},
+                ${user.password || 'E3qatech@123!'},
                 ${user.role || 'user'},
                 ${user.title || ''},
                 ${Boolean(user.is_root)},
@@ -303,13 +377,14 @@ export default {
               ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 email = EXCLUDED.email,
-                password = EXCLUDED.password,
                 role = EXCLUDED.role,
                 title = EXCLUDED.title,
                 is_active = EXCLUDED.is_active,
                 updated_at = NOW();
             `;
-            return new Response(JSON.stringify({ success: true, user }), {
+            const sanitizedUser = { ...user };
+            delete sanitizedUser.password;
+            return new Response(JSON.stringify({ success: true, user: sanitizedUser }), {
               status: 200,
               headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
             });
@@ -325,7 +400,143 @@ export default {
       }
     }
 
-    // 4. Fallback to static assets
+    // 4. Live Extraction & Ingestion Pipeline (/api/extract)
+    if (url.pathname === '/api/extract') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+          }
+        });
+      }
+
+      if (request.method === 'POST') {
+        try {
+          const body = await request.json();
+          const { action, sheetUrl, apiKey, queryFocus, items = [] } = body;
+          const dbUrl = env.DATABASE_URL;
+          const geminiKey = env.GEMINI_API_KEY;
+
+          // Direct batch save to Neon
+          if (action === 'save_batch' && Array.isArray(items) && items.length > 0) {
+            if (dbUrl) {
+              const sql = neon(dbUrl);
+              for (const ip of items) {
+                const venueStr = typeof ip.venue_fit === 'string' ? ip.venue_fit : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : '');
+                await sql`
+                  INSERT INTO entertainment_ips (
+                    id, title, category, image, licensor, producer, person, email,
+                    website, linkedin_url, social, past_shows, past_show_url,
+                    venue_fit, brand_details, status, email_template, notes, updated_at
+                  ) VALUES (
+                    ${ip.id}, ${ip.title || ''}, ${ip.category || 'Touring Entertainment'}, ${ip.image || ''},
+                    ${ip.licensor || ''}, ${ip.producer || ''}, ${ip.person || ''}, ${ip.email || ''},
+                    ${ip.website || ''}, ${ip.linkedin_url || ''}, ${ip.social || ''}, ${ip.past_shows || ''},
+                    ${ip.past_show_url || ''}, ${venueStr}, ${JSON.stringify(ip.brand_details || {})}::jsonb,
+                    ${ip.status || 'Not Contacted'}, ${ip.email_template || ''}, ${ip.notes || ''}, NOW()
+                  ) ON CONFLICT (id) DO UPDATE SET
+                    title = EXCLUDED.title, category = EXCLUDED.category, updated_at = NOW();
+                `;
+              }
+            }
+            return new Response(JSON.stringify({ success: true, count: items.length }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+          }
+
+          // Proxy fetch Google Sheet CSV
+          if (action === 'sync_sheet' && sheetUrl) {
+            let targetCsv = sheetUrl.trim();
+            const idMatch = targetCsv.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            if (idMatch && !targetCsv.includes('export?format=csv')) {
+              targetCsv = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv`;
+            }
+            const sheetRes = await fetch(targetCsv, { headers: { Accept: 'text/csv, text/plain, */*' } });
+            if (!sheetRes.ok) {
+              return new Response(JSON.stringify({ success: false, error: `Google Sheets returned HTTP ${sheetRes.status}` }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+              });
+            }
+            const csvData = await sheetRes.text();
+            return new Response(JSON.stringify({ success: true, csv: csvData }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+          }
+
+          // Gemini AI web search
+          if (action === 'gemini_extract') {
+            const activeKey = apiKey || geminiKey;
+            if (!activeKey) {
+              return new Response(JSON.stringify({ success: false, error: 'GEMINI_API_KEY is not configured.' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+              });
+            }
+
+            const prompt = `Search the web for 5 REAL, active international touring entertainment properties, exhibitions, or arena shows touring in 2025-2026. Focus: ${queryFocus || 'Family entertainment, arena spectacles, and immersive exhibitions'}. Return ONLY a strict JSON array of objects with keys: "title", "category", "licensor", "producer", "person", "email", "website", "linkedin_url", "past_shows", "venue_fit", "brand_details", "notes". Doha venues: QNCC, DECC, Lusail Arena, Katara, Place Vendôme. Output raw JSON only.`;
+
+            const models = ['gemini-flash-latest', 'gemini-3.5-flash-lite'];
+            let aiJson = null;
+            let lastErr = null;
+
+            for (const model of models) {
+              const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ role: 'user', parts: [{ text: prompt }] }]
+                })
+              });
+
+              if (aiRes.ok) {
+                aiJson = await aiRes.json();
+                break;
+              } else {
+                const errBody = await aiRes.json().catch(() => ({}));
+                lastErr = errBody.error?.message || `HTTP ${aiRes.status}`;
+              }
+            }
+
+            if (!aiJson) {
+              return new Response(JSON.stringify({ success: false, error: lastErr || 'Gemini API unavailable' }), {
+                status: 502,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+              });
+            }
+
+            const rawText = aiJson.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            let cleaned = rawText.trim().replace(/^```[a-zA-Z]*\n?/, '').replace(/```$/, '').trim();
+            let parsed = [];
+            try {
+              parsed = JSON.parse(cleaned);
+            } catch {
+              const m = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]/);
+              if (m) parsed = JSON.parse(m[0]);
+            }
+
+            return new Response(JSON.stringify({ success: true, properties: parsed }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+          }
+
+          return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400 });
+        } catch (err) {
+          return new Response(JSON.stringify({ success: false, error: err.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        }
+      }
+    }
+
+    // 5. Fallback to static assets
     if (env.ASSETS) {
       return env.ASSETS.fetch(request);
     }

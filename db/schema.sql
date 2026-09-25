@@ -17,9 +17,10 @@ CREATE TABLE IF NOT EXISTS entertainment_ips (
     social TEXT,
     past_shows TEXT,
     past_show_url TEXT,
-    venue_fit JSONB DEFAULT '[]'::jsonb,
+    venue_fit TEXT,
     brand_details JSONB DEFAULT '{}'::jsonb,
     status VARCHAR(32) DEFAULT 'Prospect',
+    email_template TEXT,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -64,7 +65,7 @@ CREATE TABLE IF NOT EXISTS iphub_users (
 CREATE INDEX IF NOT EXISTS idx_users_email ON iphub_users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON iphub_users(role);
 
--- Seed initial E3 Administrator and Team Users
+-- Seed initial E3 Administrator and Team Users (DO NOT overwrite updated passwords on conflict)
 INSERT INTO iphub_users (id, name, email, password, role, title, is_root, is_active)
 VALUES 
     ('usr-admin-01', 'E3 Master Administrator', 'admin@eeeqa.com', 'E3qatech@123!', 'admin', 'Chief Executive & Platform Administrator', true, true),
@@ -77,7 +78,6 @@ VALUES
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     email = EXCLUDED.email,
-    password = EXCLUDED.password,
     role = EXCLUDED.role,
     title = EXCLUDED.title,
     updated_at = NOW();

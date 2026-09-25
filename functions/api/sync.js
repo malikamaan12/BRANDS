@@ -28,11 +28,12 @@ export async function onRequestPost(context) {
     // 2. If remote database is empty and items were provided, seed the table in batch
     if (count === 0 && items.length > 0) {
       for (const item of items) {
+        const venueStr = typeof item.venue_fit === 'string' ? item.venue_fit : JSON.stringify(item.venue_fit || '');
         await sql`
           INSERT INTO entertainment_ips (
             id, title, category, image, licensor, producer, person, email,
             website, linkedin_url, social, past_shows, past_show_url,
-            venue_fit, brand_details, status, notes, updated_at
+            venue_fit, brand_details, status, email_template, notes, updated_at
           ) VALUES (
             ${item.id},
             ${item.title || ''},
@@ -47,9 +48,10 @@ export async function onRequestPost(context) {
             ${item.social || ''},
             ${item.past_shows || ''},
             ${item.past_show_url || ''},
-            ${JSON.stringify(item.venue_fit || [])}::jsonb,
+            ${venueStr},
             ${JSON.stringify(item.brand_details || {})}::jsonb,
             ${item.status || 'Prospect'},
+            ${item.email_template || ''},
             ${item.notes || ''},
             NOW()
           ) ON CONFLICT (id) DO NOTHING;
@@ -62,7 +64,7 @@ export async function onRequestPost(context) {
       SELECT 
         id, title, category, image, licensor, producer, person, email, 
         website, linkedin_url, social, past_shows, past_show_url, 
-        venue_fit, brand_details, status, notes, updated_at
+        venue_fit, brand_details, status, email_template, notes, updated_at
       FROM entertainment_ips
       ORDER BY updated_at DESC
     `;

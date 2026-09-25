@@ -20,13 +20,12 @@ export async function onRequestGet(context) {
   }
 
   try {
-    // Stateless one-shot HTTP fetch via port 443 - zero persistent TCP sockets
     const sql = neon(dbUrl);
     const rows = await sql`
       SELECT 
         id, title, category, image, licensor, producer, person, email, 
         website, linkedin_url, social, past_shows, past_show_url, 
-        venue_fit, brand_details, status, notes, updated_at
+        venue_fit, brand_details, status, email_template, notes, updated_at
       FROM entertainment_ips
       ORDER BY updated_at DESC
     `;
@@ -68,13 +67,13 @@ export async function onRequestPost(context) {
 
     const sql = neon(dbUrl);
 
-    // Upsert items into Neon PostgreSQL atomically
     for (const item of items) {
+      const venueStr = typeof item.venue_fit === 'string' ? item.venue_fit : JSON.stringify(item.venue_fit || '');
       await sql`
         INSERT INTO entertainment_ips (
           id, title, category, image, licensor, producer, person, email,
           website, linkedin_url, social, past_shows, past_show_url,
-          venue_fit, brand_details, status, notes, updated_at
+          venue_fit, brand_details, status, email_template, notes, updated_at
         ) VALUES (
           ${item.id},
           ${item.title || ''},
@@ -89,9 +88,10 @@ export async function onRequestPost(context) {
           ${item.social || ''},
           ${item.past_shows || ''},
           ${item.past_show_url || ''},
-          ${JSON.stringify(item.venue_fit || [])}::jsonb,
+          ${venueStr},
           ${JSON.stringify(item.brand_details || {})}::jsonb,
           ${item.status || 'Prospect'},
+          ${item.email_template || ''},
           ${item.notes || ''},
           NOW()
         )
@@ -111,6 +111,7 @@ export async function onRequestPost(context) {
           venue_fit = EXCLUDED.venue_fit,
           brand_details = EXCLUDED.brand_details,
           status = EXCLUDED.status,
+          email_template = EXCLUDED.email_template,
           notes = EXCLUDED.notes,
           updated_at = NOW();
       `;
@@ -128,12 +129,52 @@ export async function onRequestPost(context) {
   }
 }
 
+export async function onRequestDelete(context) {
+  const { request, env } = context;
+  const dbUrl = env.DATABASE_URL;
+
+  if (!dbUrl) {
+    return new Response(JSON.stringify({ error: 'DATABASE_URL not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  try {
+    const url = new URL(request.url);
+    let idToDelete = url.searchParams.get('id');
+    if (!idToDelete) {
+      try {
+        const body = await request.json();
+        idToDelete = body.id;
+      } catch {}
+    }
+
+    if (!idToDelete) {
+      return new Response(JSON.stringify({ error: 'Missing ID for deletion' }), { status: 400 });
+    }
+
+    const sql = neon(dbUrl);
+    await sql`DELETE FROM entertainment_ips WHERE id = ${idToDelete}`;
+
+    return new Response(JSON.stringify({ success: true, deleted: idToDelete }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
 export async function onRequestOptions() {
   return new Response(null, {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     }
   });

@@ -5,17 +5,17 @@ export default function StatsOverview({ ips }) {
   const total = ips.length;
 
   const theatrical = ips.filter(ip => {
-    const c = ip.category.toLowerCase();
+    const c = (ip.category || '').toLowerCase();
     return (c.includes('stage') || c.includes('theatrical') || c.includes('musical') || c.includes('puppet')) && !c.includes('inflatable') && !c.includes('interactive');
   }).length;
 
   const exhibitions = ips.filter(ip => {
-    const c = ip.category.toLowerCase();
+    const c = (ip.category || '').toLowerCase();
     return (c.includes('exhibition') || c.includes('museum')) && !c.includes('stage');
   }).length;
 
   const arena = ips.filter(ip => {
-    const c = ip.category.toLowerCase();
+    const c = (ip.category || '').toLowerCase();
     return c.includes('arena') || c.includes('stunt') || c.includes('ice') || c.includes('motorsport');
   }).length;
 

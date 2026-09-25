@@ -15,8 +15,10 @@ import AddIPModal from './components/AddIPModal';
 import LoginModal from './components/LoginModal';
 import LoginScreen from './components/LoginScreen';
 import AdminPanelModal from './components/AdminPanelModal';
+import ExtractionModal from './components/ExtractionModal';
 import Toast from './components/Toast';
-import { authService, DEFAULT_USERS } from './services/authService';
+import { authService } from './services/authService';
+import { getExtractionSettings, syncFromGoogleSheet } from './services/extractionService';
 
 export default function App() {
   const [ips, setIps] = useState(() => loadIPs());
@@ -24,6 +26,8 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isExtractionModalOpen, setIsExtractionModalOpen] = useState(false);
+  const [dossierInitialTab, setDossierInitialTab] = useState('overview');
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('view');
@@ -40,6 +44,17 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  // Initial mount: seamlessly check and synchronize with remote Neon PostgreSQL
+  useEffect(() => {
+    let isMounted = true;
+    NeonDbService.getIps(ips).then((result) => {
+      if (isMounted && result?.ips?.length) {
+        setIps(result.ips);
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
   // Count how many leads were discovered today / daily extracted
   const todayLeadsCount = useMemo(() => {
     return ips.filter((ip) => {
@@ -47,12 +62,12 @@ export default function App() {
         ip.isDailyDiscovered === true ||
         Boolean(ip.extracted_at) ||
         Boolean(ip.extracted_date) ||
-        parseInt(ip.id.replace('IP-', ''), 10) > 44
+        parseInt((ip.id || '').replace('IP-', ''), 10) > 44
       );
     }).length;
   }, [ips]);
 
-  // Persist to localStorage whenever IPs change
+  // Persist to unified localStorage whenever IPs change
   useEffect(() => {
     saveIPs(ips);
   }, [ips]);
@@ -62,7 +77,7 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const ipParam = params.get('ip');
     if (ipParam && ips.length > 0) {
-      const found = ips.find(item => item.id.toLowerCase() === ipParam.toLowerCase());
+      const found = ips.find(item => (item.id || '').toLowerCase() === ipParam.toLowerCase());
       if (found) setSelectedIP(found);
     }
   }, [ips]);
@@ -79,25 +94,54 @@ export default function App() {
   useEffect(() => {
     const res = checkAndTriggerDailyExtraction(ips, (newlyExtracted) => {
       setIps((prev) => [...prev, ...newlyExtracted]);
+      NeonDbService.upsertIps(newlyExtracted).catch(() => {});
     });
     if (res?.extracted > 0) {
       showToast(`⚡ Automated Daily Extraction: Ingested ${res.extracted} new verified entertainment IPs!`);
     }
   }, []);
 
-  // Filtered IPs calculation
+  // Auto-sync from configured Google Sheet on startup (if enabled in settings)
+  useEffect(() => {
+    const settings = getExtractionSettings();
+    if (settings.autoSyncEnabled && settings.googleSheetUrl) {
+      syncFromGoogleSheet(settings.googleSheetUrl, ips)
+        .then((res) => {
+          if (res?.newIPs?.length > 0) {
+            setIps((prev) => [...res.newIPs, ...prev]);
+            NeonDbService.pushIps(res.newIPs).catch(() => {});
+            showToast(`📊 Google Sheet Auto-Sync: Ingested ${res.newIPs.length} new properties!`);
+          }
+        })
+        .catch((err) => {
+          console.warn('Background Google Sheet sync:', err.message);
+        });
+    }
+  }, []);
+
+  // Filtered IPs calculation with complete null-safety
   const filteredIPs = useMemo(() => {
     return ips.filter((ip) => {
+      const title = (ip.title || '').toLowerCase();
+      const licensor = (ip.licensor || '').toLowerCase();
+      const producer = (ip.producer || '').toLowerCase();
+      const category = (ip.category || '').toLowerCase();
+      const id = (ip.id || '').toLowerCase();
+      const venueFitStr = typeof ip.venue_fit === 'string'
+        ? ip.venue_fit
+        : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : '');
+      const venueLower = venueFitStr.toLowerCase();
+
       // 1. Search filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const match =
-          ip.title.toLowerCase().includes(q) ||
-          ip.licensor.toLowerCase().includes(q) ||
-          ip.producer.toLowerCase().includes(q) ||
-          ip.category.toLowerCase().includes(q) ||
-          ip.venue_fit.toLowerCase().includes(q) ||
-          ip.id.toLowerCase().includes(q);
+          title.includes(q) ||
+          licensor.includes(q) ||
+          producer.includes(q) ||
+          category.includes(q) ||
+          venueLower.includes(q) ||
+          id.includes(q);
         if (!match) return false;
       }
 
@@ -106,7 +150,7 @@ export default function App() {
         ip.isDailyDiscovered === true ||
         Boolean(ip.extracted_at) ||
         Boolean(ip.extracted_date) ||
-        parseInt(ip.id.replace('IP-', ''), 10) > 44;
+        parseInt((ip.id || '').replace('IP-', ''), 10) > 44;
 
       if (filterLeadType === 'today' || filterCategory === 'today') {
         if (!isTodayLead) return false;
@@ -116,7 +160,7 @@ export default function App() {
 
       // 3. Category filter (skip if filterCategory is 'today' since handled above)
       if (filterCategory !== 'all' && filterCategory !== 'today') {
-        const cat = ip.category.toLowerCase();
+        const cat = category;
         if (filterCategory === 'theatrical' && !(cat.includes('stage') || cat.includes('theatrical') || cat.includes('musical') || cat.includes('puppet'))) {
           return false;
         }
@@ -136,7 +180,7 @@ export default function App() {
 
       // 4. Venue filter
       if (filterVenue !== 'all') {
-        const ven = ip.venue_fit.toLowerCase();
+        const ven = venueLower;
         if (filterVenue === 'qncc' && !ven.includes('qncc')) return false;
         if (filterVenue === 'decc' && !ven.includes('decc')) return false;
         if (filterVenue === 'lusail' && !(ven.includes('lusail') || ven.includes('abha'))) return false;
@@ -154,12 +198,26 @@ export default function App() {
     });
   }, [ips, searchQuery, filterCategory, filterVenue, filterStatus, filterLeadType]);
 
-  // Update a single IP (e.g. notes, status)
+  // Open dossier modal to overview tab
+  const handleOpenDossier = (ip) => {
+    setSelectedIP(ip);
+    setDossierInitialTab('overview');
+  };
+
+  // Open dossier modal specifically to pitch email tab
+  const handleOpenPitch = (ip) => {
+    setSelectedIP(ip);
+    setDossierInitialTab('pitch');
+  };
+
+  // Update a single IP (persists locally and remotely to Neon)
   const handleUpdateIP = (updatedIP) => {
     setIps((prev) => prev.map((item) => (item.id === updatedIP.id ? updatedIP : item)));
     if (selectedIP && selectedIP.id === updatedIP.id) {
       setSelectedIP(updatedIP);
     }
+    // Background push to Neon
+    NeonDbService.upsertIps(updatedIP).catch(() => {});
   };
 
   // Quick advance pipeline stage for Kanban
@@ -174,13 +232,23 @@ export default function App() {
     }
   };
 
-  // Add new IP
+  // Add new IP with collision-free sequential ID generation
   const handleAddIP = (newIPData) => {
-    const nextNum = ips.length + 1;
-    const newId = `IP-${String(nextNum).padStart(3, '0')}`;
+    let maxNum = 0;
+    ips.forEach((ip) => {
+      const match = (ip.id || '').match(/IP-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    });
+
+    const newId = `IP-${String(maxNum + 1).padStart(3, '0')}`;
     const newIP = { id: newId, ...newIPData };
 
     setIps((prev) => [newIP, ...prev]);
+    // Persist to remote Neon
+    NeonDbService.upsertIps(newIP).catch(() => {});
     showToast(`Added new property: ${newIP.title}`);
   };
 
@@ -201,16 +269,16 @@ export default function App() {
   const handleExportCSV = () => {
     const headers = ['ID', 'Title', 'Category', 'Licensor', 'Producer', 'Contact Person', 'Email', 'Website', 'Venue Fit', 'Status', 'Notes'];
     const rows = ips.map((ip) => [
-      `"${ip.id.replace(/"/g, '""')}"`,
-      `"${ip.title.replace(/"/g, '""')}"`,
-      `"${ip.category.replace(/"/g, '""')}"`,
-      `"${ip.licensor.replace(/"/g, '""')}"`,
-      `"${ip.producer.replace(/"/g, '""')}"`,
-      `"${ip.person.replace(/"/g, '""')}"`,
-      `"${ip.email.replace(/"/g, '""')}"`,
-      `"${ip.website.replace(/"/g, '""')}"`,
-      `"${ip.venue_fit.replace(/"/g, '""')}"`,
-      `"${ip.status.replace(/"/g, '""')}"`,
+      `"${(ip.id || '').replace(/"/g, '""')}"`,
+      `"${(ip.title || '').replace(/"/g, '""')}"`,
+      `"${(ip.category || '').replace(/"/g, '""')}"`,
+      `"${(ip.licensor || '').replace(/"/g, '""')}"`,
+      `"${(ip.producer || '').replace(/"/g, '""')}"`,
+      `"${(ip.person || '').replace(/"/g, '""')}"`,
+      `"${(ip.email || '').replace(/"/g, '""')}"`,
+      `"${(ip.website || '').replace(/"/g, '""')}"`,
+      `"${(typeof ip.venue_fit === 'string' ? ip.venue_fit : '').replace(/"/g, '""')}"`,
+      `"${(ip.status || '').replace(/"/g, '""')}"`,
       `"${(ip.notes || '').replace(/"/g, '""')}"`
     ]);
 
@@ -243,22 +311,21 @@ export default function App() {
       NeonDbService.upsertIps(result.added).catch(() => {});
       showToast(`⚡ Daily Extraction: Ingested ${result.added.length} new IPs (${result.remainingInPool} left in pool, 0 duplicates)!`);
     } else {
-      showToast(`⚡ Discovery pool is fully up-to-date! All 16+ pipeline properties are already active in portfolio.`);
+      showToast(`⚡ Discovery pool is fully up-to-date! All pipeline properties are active.`);
     }
   };
 
-  // One-shot on-demand sync with Neon Serverless Postgres via Cloudflare Pages Function
-  // STRICT ARCHITECTURAL RULE: Only runs when user requests it; Neon scales to 0 when idle.
+  // Explicit one-shot on-demand sync with Neon Serverless Postgres via Cloudflare
   const handleSyncNeon = async () => {
     setIsSyncing(true);
-    showToast('☁️ Connecting to Neon Serverless via Cloudflare Pages...');
+    showToast('☁️ Connecting to Neon Serverless via Cloudflare...');
     try {
       const res = await NeonDbService.syncWithRemote(ips);
       if (res.success && res.ips?.length) {
         setIps(res.ips);
         showToast(`☁️ Neon Serverless Synced: ${res.ips.length} properties synchronized! Neon scaling to 0.`);
       } else {
-        showToast('☁️ Local cache active. Configure DATABASE_URL in Cloudflare Pages to connect remote Neon instance.');
+        showToast('☁️ Local cache active. Configure DATABASE_URL in Cloudflare to connect remote Neon instance.');
       }
     } catch (err) {
       showToast(`☁️ Neon connection: ${err.message || 'Offline fallback mode active'}`);
@@ -268,7 +335,7 @@ export default function App() {
   };
 
   // RBAC Property Deletion: Admin has full control; Normal User is restricted
-  const handleDeleteIP = (ipId) => {
+  const handleDeleteIP = async (ipId) => {
     if (!authService.canDeleteIP(currentUser)) {
       showToast('🔒 Action Restricted: Normal users cannot delete cards. Administrator access required.');
       return;
@@ -278,6 +345,9 @@ export default function App() {
     if (selectedIP && selectedIP.id === ipId) {
       setSelectedIP(null);
     }
+
+    // Persist delete to Neon database to prevent resurrection
+    await NeonDbService.deleteIp(ipId);
     showToast(`Deleted property: ${target?.title || ipId}`);
   };
 
@@ -308,6 +378,7 @@ export default function App() {
 
       <NavigationBar
         onOpenAddModal={() => setIsAddModalOpen(true)}
+        onOpenExtractionModal={() => setIsExtractionModalOpen(true)}
         onExportCSV={handleExportCSV}
         onExportJSON={handleExportJSON}
         onResetData={handleResetData}
@@ -316,6 +387,8 @@ export default function App() {
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
         onLogout={handleLogout}
+        onSyncNeon={handleSyncNeon}
+        isSyncing={isSyncing}
       />
 
       <StatsOverview ips={ips} />
@@ -343,8 +416,8 @@ export default function App() {
         {viewMode === 'cards' && (
           <CardsView
             ips={filteredIPs}
-            onOpenDossier={(ip) => setSelectedIP(ip)}
-            onOpenPitch={(ip) => setSelectedIP(ip)}
+            onOpenDossier={handleOpenDossier}
+            onOpenPitch={handleOpenPitch}
             onUpdateStatus={(ip, newStatus) => {
               const updated = { ...ip, status: newStatus };
               handleUpdateIP(updated);
@@ -359,8 +432,8 @@ export default function App() {
         {viewMode === 'deck3d' && (
           <DeckView3D
             ips={filteredIPs}
-            onOpenDossier={(ip) => setSelectedIP(ip)}
-            onOpenPitch={(ip) => setSelectedIP(ip)}
+            onOpenDossier={handleOpenDossier}
+            onOpenPitch={handleOpenPitch}
             onUpdateStatus={(ip, newStatus) => {
               const updated = { ...ip, status: newStatus };
               handleUpdateIP(updated);
@@ -373,8 +446,8 @@ export default function App() {
         {viewMode === 'table' && (
           <TableView
             ips={filteredIPs}
-            onOpenDossier={(ip) => setSelectedIP(ip)}
-            onOpenPitch={(ip) => setSelectedIP(ip)}
+            onOpenDossier={handleOpenDossier}
+            onOpenPitch={handleOpenPitch}
             currentUser={currentUser}
             onDeleteIP={handleDeleteIP}
             onShowToast={showToast}
@@ -384,7 +457,7 @@ export default function App() {
         {viewMode === 'kanban' && (
           <KanbanView
             ips={filteredIPs}
-            onOpenDossier={(ip) => setSelectedIP(ip)}
+            onOpenDossier={handleOpenDossier}
             onAdvanceStatus={handleAdvanceStatus}
           />
         )}
@@ -392,14 +465,15 @@ export default function App() {
         {viewMode === 'venues' && (
           <VenuesMatrix
             ips={filteredIPs}
-            onOpenDossier={(ip) => setSelectedIP(ip)}
-            onOpenPitch={(ip) => setSelectedIP(ip)}
+            onOpenDossier={handleOpenDossier}
+            onOpenPitch={handleOpenPitch}
           />
         )}
       </main>
 
       <IPDossierModal
         ip={selectedIP}
+        initialTab={dossierInitialTab}
         onClose={() => setSelectedIP(null)}
         onUpdateIP={handleUpdateIP}
         onShowToast={showToast}
@@ -419,11 +493,23 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
+      <ExtractionModal
+        isOpen={isExtractionModalOpen}
+        onClose={() => setIsExtractionModalOpen(false)}
+        existingIPs={ips}
+        onAddExtractedIPs={(newIPs) => {
+          if (!newIPs || newIPs.length === 0) return;
+          setIps((prev) => [...newIPs, ...prev]);
+        }}
+        onShowToast={showToast}
+      />
+
       <AdminPanelModal
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         currentUser={currentUser}
         onShowToast={showToast}
+        onOpenExtractionModal={() => setIsExtractionModalOpen(true)}
       />
     </>
   );

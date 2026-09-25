@@ -8,7 +8,7 @@ import {
 import { authService } from '../services/authService';
 import IpHubLogo from './IpHubLogo';
 
-export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowToast }) {
+export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowToast, onOpenExtractionModal }) {
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'create' | 'matrix'
   const [searchQuery, setSearchQuery] = useState('');
@@ -397,6 +397,22 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
                 <Shield size={14} />
                 <span>RBAC Permissions Matrix</span>
               </button>
+
+              <div style={{ marginLeft: 'auto' }}>
+                <button
+                  type="button"
+                  className="apple-btn apple-btn-outline-gold"
+                  style={{ padding: '0.45rem 0.95rem', fontSize: '0.78rem' }}
+                  onClick={() => {
+                    onClose();
+                    onOpenExtractionModal && onOpenExtractionModal();
+                  }}
+                  title="Configure Google Sheets (Gemini Spark) sync & live Gemini AI web crawler"
+                >
+                  <Sparkles size={14} />
+                  <span>Extraction Pipeline Hub</span>
+                </button>
+              </div>
             </div>
 
             {/* Tab Body */}

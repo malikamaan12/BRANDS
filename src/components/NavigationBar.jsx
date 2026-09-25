@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Plus, FileSpreadsheet, Code2, RotateCcw, Zap, 
+  Plus, FileSpreadsheet, Code2, RotateCcw, Zap, Sparkles,
   ShieldCheck, Shield, User, LogIn, LogOut, Settings, 
-  ChevronDown, KeyRound, UserCheck 
+  ChevronDown, KeyRound, UserCheck, Cloud, RefreshCw 
 } from 'lucide-react';
 import IpHubLogo from './IpHubLogo';
 
 export default function NavigationBar({ 
   onOpenAddModal, 
+  onOpenExtractionModal,
   onExportCSV, 
   onExportJSON, 
   onResetData, 
@@ -16,7 +17,9 @@ export default function NavigationBar({
   onOpenLoginModal,
   onOpenAdminModal,
   onLogout,
-  onQuickSwitchRole
+  onQuickSwitchRole,
+  onSyncNeon,
+  isSyncing = false
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -64,6 +67,35 @@ export default function NavigationBar({
             aria-label="Extract Daily Leads"
           >
             <Zap size={16} fill="#fbbf24" />
+          </button>
+
+          {/* Neon Cloud Sync Button */}
+          {onSyncNeon && (
+            <button 
+              className={`nav-icon-btn ${isSyncing ? 'gold' : 'cyan'}`}
+              onClick={onSyncNeon}
+              disabled={isSyncing}
+              title={isSyncing ? "Synchronizing with Neon Serverless..." : "Sync with Neon Cloud Database"}
+              aria-label="Sync with Neon Cloud Database"
+              style={{ color: isSyncing ? '#fbbf24' : '#38bdf8' }}
+            >
+              <Cloud size={16} className={isSyncing ? 'spin-hover' : ''} />
+            </button>
+          )}
+
+          {/* Live Extraction & AI Scraper Pipeline Button */}
+          <button 
+            className="nav-icon-btn highlight" 
+            onClick={onOpenExtractionModal}
+            title="Lead Extraction Pipeline: Google Sheets (Gemini Spark) & Live Gemini Web Scraper"
+            aria-label="Extraction Pipeline"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(16, 185, 129, 0.18) 100%)',
+              borderColor: 'rgba(56, 189, 248, 0.4)',
+              color: '#38bdf8'
+            }}
+          >
+            <Sparkles size={16} />
           </button>
 
           {/* Add IP Lead Icon Button */}

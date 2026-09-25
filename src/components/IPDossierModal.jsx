@@ -8,8 +8,8 @@ import {
 import FrostedHexagon from './FrostedHexagon';
 import { getIPTheme, getCategoryFallbackImage } from './CardsView';
 
-export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast, currentUser, onDeleteIP }) {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'pitch' | 'notes'
+export default function IPDossierModal({ ip, initialTab = 'overview', onClose, onUpdateIP, onShowToast, currentUser, onDeleteIP }) {
+  const [activeTab, setActiveTab] = useState(initialTab); // 'overview' | 'pitch' | 'notes'
   const [copiedPitch, setCopiedPitch] = useState(false);
   const [copiedSubject, setCopiedSubject] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -29,6 +29,7 @@ export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast, c
     }
   };
 
+  // Sync state when selected IP or initialTab changes
   useEffect(() => {
     if (ip) {
       setNotes(ip.notes || '');
@@ -37,24 +38,40 @@ export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast, c
       const tabParam = params.get('tab');
       if (tabParam && ['overview', 'pitch', 'notes'].includes(tabParam)) {
         setActiveTab(tabParam);
+      } else if (initialTab) {
+        setActiveTab(initialTab);
       } else {
         setActiveTab('overview');
       }
     }
-  }, [ip]);
+  }, [ip?.id, initialTab]);
+
+  // Debounced notes update to avoid re-rendering entire app on every keystroke
+  useEffect(() => {
+    if (!ip) return;
+    const timer = setTimeout(() => {
+      if (notes !== (ip.notes || '')) {
+        onUpdateIP({ ...ip, notes, status });
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [notes]);
 
   if (!ip) return null;
 
   const theme = getIPTheme(ip);
   const IconComponent = theme.icon;
 
+  // Safe fallback template to prevent fatal crashes if email_template is missing
+  const template = ip.email_template || `Subject: Host Partnership Inquiry: Bringing ${ip.title} to Doha, Qatar\n\nDear ${ip.producer || ip.licensor} Touring Team,\n\nWe are writing to explore hosting ${ip.title} in Doha, Qatar. Our event production operations group specializes in world-class entertainment properties. We provide turnkey local staging, marketing, venue liaison, and promoter coordination.\n\nCould we schedule a preliminary call to discuss touring availability and Middle East routing windows?\n\nBest regards,\nHost Partnership Directorate — E3 IP HUB`;
+
   // Extract clean subject line from email template
-  const matchSubject = ip.email_template?.match(/Subject:\s*(.*)/i);
+  const matchSubject = template.match(/Subject:\s*(.*)/i);
   const subjectLine = matchSubject ? matchSubject[1] : `Host Partnership Inquiry: ${ip.title} in Doha, Qatar`;
 
   // Copy Pitch
   const handleCopyPitch = () => {
-    navigator.clipboard.writeText(ip.email_template);
+    navigator.clipboard.writeText(template);
     setCopiedPitch(true);
     onShowToast('Pitch email copied to clipboard');
     setTimeout(() => setCopiedPitch(false), 2000);
@@ -70,24 +87,24 @@ export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast, c
 
   // Copy Verified Email
   const handleCopyEmail = (emailStr) => {
-    navigator.clipboard.writeText(emailStr);
+    navigator.clipboard.writeText(emailStr || 'licensing@eeeqa.com');
     setCopiedEmail(true);
     onShowToast('Verified email copied');
     setTimeout(() => setCopiedEmail(false), 2000);
   };
 
-  // Launch Mail Client
+  // Launch Mail Client (Safe Regex extraction)
   const handleLaunchMail = () => {
-    const match = ip.email_template.match(/Subject:\s*(.*)\n\n([\s\S]*)/i);
+    const match = template.match(/Subject:\s*(.*)\n\n([\s\S]*)/i);
     let subject = subjectLine;
-    let body = ip.email_template;
+    let body = template;
 
     if (match) {
       subject = match[1];
       body = match[2];
     }
 
-    const emails = ip.email.split(/[\/,|]/).map(s => s.trim()).filter(s => s.includes('@'));
+    const emails = (ip.email || '').split(/[\/,|]/).map(s => s.trim()).filter(s => s.includes('@'));
     const recipient = emails[0] || '';
 
     const mailtoUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -99,15 +116,16 @@ export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast, c
     setStatus(newStatus);
     const updated = { ...ip, status: newStatus, notes };
     onUpdateIP(updated);
-    onShowToast(`Status updated to "${newStatus}"`);
+    showToastNotification(`Status updated to "${newStatus}"`);
   };
 
-  // Handle Notes change
+  const showToastNotification = (msg) => {
+    if (onShowToast) onShowToast(msg);
+  };
+
+  // Handle Notes change (debounced via useEffect above)
   const handleNotesChange = (e) => {
-    const newNotes = e.target.value;
-    setNotes(newNotes);
-    const updated = { ...ip, notes: newNotes, status };
-    onUpdateIP(updated);
+    setNotes(e.target.value);
   };
 
   // Add quick tag to notes
@@ -115,7 +133,7 @@ export default function IPDossierModal({ ip, onClose, onUpdateIP, onShowToast, c
     const newNotes = notes ? `${notes}\n• ${tag}` : `• ${tag}`;
     setNotes(newNotes);
     onUpdateIP({ ...ip, notes: newNotes, status });
-    onShowToast(`Added note: "${tag}"`);
+    showToastNotification(`Added note: "${tag}"`);
   };
 
   const dealStages = [

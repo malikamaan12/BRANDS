@@ -33,7 +33,7 @@ export async function onRequestGet(context) {
       );
     `;
 
-    // Ensure all 7 official E3 team credentials exist in Neon
+    // Ensure initial team credentials exist in Neon without overwriting existing passwords
     await sql`
       INSERT INTO iphub_users (id, name, email, password, role, title, is_root, is_active)
       VALUES 
@@ -47,7 +47,6 @@ export async function onRequestGet(context) {
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         email = EXCLUDED.email,
-        password = EXCLUDED.password,
         role = EXCLUDED.role,
         title = EXCLUDED.title,
         updated_at = NOW();
@@ -56,8 +55,9 @@ export async function onRequestGet(context) {
     // Remove legacy placeholder records
     await sql`DELETE FROM iphub_users WHERE email IN ('admin@iphub.com', 'user@iphub.com');`;
 
+    // CRITICAL SECURITY FIX: Omit raw passwords from GET response
     const rows = await sql`
-      SELECT id, name, email, password, role, title, is_root, is_active, created_at, updated_at
+      SELECT id, name, email, role, title, is_root, is_active, created_at, updated_at
       FROM iphub_users
       ORDER BY created_at ASC
     `;
@@ -87,8 +87,30 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
-    const { action, user, userId, newPassword } = body;
+    const { action, user, userId, newPassword, email, password } = body;
     const sql = neon(dbUrl);
+
+    // Secure server-side credential verification
+    if (action === 'login' && email && password) {
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedPass = password.trim();
+      const foundUsers = await sql`
+        SELECT id, name, email, role, title, is_root, is_active
+        FROM iphub_users
+        WHERE LOWER(email) = ${trimmedEmail} AND password = ${trimmedPass} AND is_active = true
+        LIMIT 1
+      `;
+      if (foundUsers.length > 0) {
+        return new Response(JSON.stringify({ success: true, user: foundUsers[0] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+      return new Response(JSON.stringify({ success: false, error: 'Invalid corporate email or password.' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
 
     if (action === 'delete' && userId) {
       await sql`DELETE FROM iphub_users WHERE id = ${userId} AND is_root = false`;
@@ -99,7 +121,7 @@ export async function onRequestPost(context) {
     }
 
     if (action === 'update_password' && userId && newPassword) {
-      await sql`UPDATE iphub_users SET password = ${newPassword}, updated_at = NOW() WHERE id = ${userId}`;
+      await sql`UPDATE iphub_users SET password = ${newPassword.trim()}, updated_at = NOW() WHERE id = ${userId}`;
       return new Response(JSON.stringify({ success: true, updated: userId }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
@@ -113,7 +135,7 @@ export async function onRequestPost(context) {
           ${user.id},
           ${user.name},
           ${user.email.toLowerCase()},
-          ${user.password},
+          ${user.password || 'E3qatech@123!'},
           ${user.role || 'user'},
           ${user.title || ''},
           ${Boolean(user.is_root)},
@@ -123,13 +145,14 @@ export async function onRequestPost(context) {
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
           email = EXCLUDED.email,
-          password = EXCLUDED.password,
           role = EXCLUDED.role,
           title = EXCLUDED.title,
           is_active = EXCLUDED.is_active,
           updated_at = NOW();
       `;
-      return new Response(JSON.stringify({ success: true, user }), {
+      const sanitizedUser = { ...user };
+      delete sanitizedUser.password;
+      return new Response(JSON.stringify({ success: true, user: sanitizedUser }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });

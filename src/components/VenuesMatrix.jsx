@@ -50,7 +50,12 @@ export default function VenuesMatrix({ ips, onOpenDossier, onOpenPitch }) {
   return (
     <div className="venues-grid">
       {VENUE_CLUSTERS.map((cluster) => {
-        const matchedIPs = ips.filter((ip) => cluster.matcher(ip.venue_fit.toLowerCase()));
+        const matchedIPs = ips.filter((ip) => {
+          const venueStr = typeof ip.venue_fit === 'string'
+            ? ip.venue_fit
+            : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : (ip.venue_fit ? String(ip.venue_fit) : ''));
+          return cluster.matcher(venueStr.toLowerCase());
+        });
 
         return (
           <div key={cluster.id} className="glass-panel venue-card">

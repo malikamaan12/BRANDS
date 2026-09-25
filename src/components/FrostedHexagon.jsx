@@ -17,6 +17,12 @@ export default function FrostedHexagon({
   size = 72 
 }) {
   const iconSize = Math.round(size * 0.44);
+  const rawId = React.useId();
+  const uid = rawId.replace(/[^a-zA-Z0-9_-]/g, '');
+  const strokeId = `hexStroke-${uid}`;
+  const fillId = `hexFill-${uid}`;
+  const innerBevelId = `innerBevel-${uid}`;
+  const glowFilterId = `hexGlow-${uid}`;
 
   return (
     <div 
@@ -49,7 +55,7 @@ export default function FrostedHexagon({
       >
         <defs>
           {/* Specular Rim Gradient (Top-Left Light Source) */}
-          <linearGradient id={`hexStroke-${glowColor.replace('#', '')}`} x1="12" y1="8" x2="64" y2="68" gradientUnits="userSpaceOnUse">
+          <linearGradient id={strokeId} x1="12" y1="8" x2="64" y2="68" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
             <stop offset="35%" stopColor="#ffffff" stopOpacity="0.35" />
             <stop offset="70%" stopColor="rgba(255,255,255,0.08)" />
@@ -57,20 +63,20 @@ export default function FrostedHexagon({
           </linearGradient>
 
           {/* Frosted Glass Body Gradient */}
-          <linearGradient id={`hexFill-${glowColor.replace('#', '')}`} x1="18" y1="10" x2="58" y2="66" gradientUnits="userSpaceOnUse">
+          <linearGradient id={fillId} x1="18" y1="10" x2="58" y2="66" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="rgba(255, 255, 255, 0.22)" />
             <stop offset="50%" stopColor="rgba(255, 255, 255, 0.07)" />
             <stop offset="100%" stopColor="rgba(0, 0, 0, 0.45)" />
           </linearGradient>
 
           {/* Inner Bevel Specular Arc */}
-          <linearGradient id="innerBevel" x1="20" y1="12" x2="56" y2="64" gradientUnits="userSpaceOnUse">
+          <linearGradient id={innerBevelId} x1="20" y1="12" x2="56" y2="64" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
             <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </linearGradient>
 
           {/* Soft Glow Filter */}
-          <filter id={`hexGlow-${glowColor.replace('#', '')}`} x="-20%" y="-20%" width="140%" height="140%">
+          <filter id={glowFilterId} x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
@@ -102,8 +108,8 @@ export default function FrostedHexagon({
              Q 10 22, 13 20.5 
              L 35 8 
              Q 38 7, 38 7 Z"
-          fill={`url(#hexFill-${glowColor.replace('#', '')})`}
-          stroke={`url(#hexStroke-${glowColor.replace('#', '')})`}
+          fill={`url(#${fillId})`}
+          stroke={`url(#${strokeId})`}
           strokeWidth="1.5"
           style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
         />
@@ -114,7 +120,7 @@ export default function FrostedHexagon({
              Q 40 13, 59 23.5 
              Q 61 25, 61 28 
              L 61 48"
-          stroke="url(#innerBevel)"
+          stroke={`url(#${innerBevelId})`}
           strokeWidth="1"
           strokeLinecap="round"
           opacity="0.6"

@@ -15,12 +15,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     setIsSubmitting(true);
 
-    const res = authService.login(email, password);
+    const res = await authService.loginAsync(email, password);
     setIsSubmitting(false);
 
     if (res.success) {

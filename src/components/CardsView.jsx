@@ -22,7 +22,8 @@ export default function CardsView({
 
   const handleQuickCopy = (e, ip) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(ip.email_template);
+    const pitchText = ip.email_template || `Subject: Host Partnership Inquiry: ${ip.title} in Doha, Qatar\n\nDear ${ip.producer || ip.licensor} Team,\n\nWe are exploring bringing ${ip.title} to Doha, Qatar.\n\nBest regards,`;
+    navigator.clipboard.writeText(pitchText);
     setCopiedId(ip.id);
     onShowToast(`Pitch email copied for ${ip.title}`);
     setTimeout(() => setCopiedId(null), 2000);
@@ -307,7 +308,7 @@ export function getCategoryFallbackImage(category = '') {
 
 // Helper to assign a jewel tone & theme icon inspired by the IP's character
 export function getIPTheme(ip) {
-  const t = (ip.title + ' ' + ip.category).toLowerCase();
+  const t = (((ip?.title || '') + ' ' + (ip?.category || ''))).toLowerCase();
 
   // Dinosaur / Paleontology
   if (t.includes('jurassic') || t.includes('dino') || t.includes('gigantosaurus')) {

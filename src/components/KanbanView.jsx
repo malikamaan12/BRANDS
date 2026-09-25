@@ -79,7 +79,7 @@ export default function KanbanView({ ips, onOpenDossier, onAdvanceStatus }) {
                     </button>
 
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                      {ip.producer.split('/')[0]}
+                      {(ip.producer || 'Direct Licensor').split('/')[0]}
                     </span>
                   </div>
 

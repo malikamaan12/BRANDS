@@ -21,7 +21,7 @@ export const DEFAULT_USERS = [
   {
     id: 'usr-admin-01',
     name: 'E3 Master Administrator',
-    email: 'Admin@eeeqa.com',
+    email: 'admin@eeeqa.com',
     password: 'E3qatech@123!',
     role: 'admin',
     title: 'Chief Executive & Platform Administrator',
@@ -113,18 +113,16 @@ class AuthService {
         const currentUsers = JSON.parse(stored);
         let updated = false;
 
-        // Ensure all DEFAULT_USERS are present with official password & role
+        // Ensure all DEFAULT_USERS are present without overwriting user-updated passwords
         DEFAULT_USERS.forEach((def) => {
           const idx = currentUsers.findIndex((u) => u.email.toLowerCase() === def.email.toLowerCase());
           if (idx === -1) {
             currentUsers.push(def);
             updated = true;
           } else {
-            if (currentUsers[idx].password !== def.password || currentUsers[idx].role !== def.role) {
-              currentUsers[idx].password = def.password;
+            // Keep user's custom password! Only fill role/title if missing
+            if (!currentUsers[idx].role) {
               currentUsers[idx].role = def.role;
-              currentUsers[idx].name = def.name;
-              currentUsers[idx].title = def.title;
               updated = true;
             }
           }
@@ -151,7 +149,7 @@ class AuthService {
     }
   }
 
-  // Fetch users from Neon PostgreSQL with local fallback
+  // Fetch users from Neon PostgreSQL with local password preservation
   async syncUsersFromRemote() {
     try {
       const res = await fetch('/api/users', {
@@ -161,17 +159,24 @@ class AuthService {
       if (res.ok) {
         const data = await res.json();
         if (data.users && data.users.length > 0) {
-          const formatted = data.users.map((u) => ({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            password: u.password,
-            role: u.role,
-            title: u.title,
-            isRoot: Boolean(u.is_root),
-            isActive: u.is_active !== false,
-            createdAt: u.created_at
-          }));
+          const currentLocal = this.getUsers();
+          const formatted = data.users.map((u) => {
+            const existing = currentLocal.find(
+              (l) => l.id === u.id || l.email.toLowerCase() === u.email.toLowerCase()
+            );
+            return {
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              // Preserve local password if remote doesn't provide it
+              password: existing?.password || 'E3qatech@123!',
+              role: u.role,
+              title: u.title,
+              isRoot: Boolean(u.is_root),
+              isActive: u.is_active !== false,
+              createdAt: u.created_at
+            };
+          });
           this.saveUsers(formatted);
           return formatted;
         }
@@ -232,6 +237,7 @@ class AuthService {
     }
   }
 
+  // Synchronous client-side login verification
   login(email, password) {
     const trimmedEmail = (email || '').trim().toLowerCase();
     const trimmedPass = (password || '').trim();
@@ -261,8 +267,50 @@ class AuthService {
       return { success: false, error: 'Invalid password. Please verify credentials.' };
     }
 
-    this.setCurrentUser(user);
-    return { success: true, user };
+    const sanitized = { ...user };
+    delete sanitized.password;
+    this.setCurrentUser(sanitized);
+    return { success: true, user: sanitized };
+  }
+
+  // Server-side + client-side hybrid login verification
+  async loginAsync(email, password) {
+    const trimmedEmail = (email || '').trim().toLowerCase();
+    const trimmedPass = (password || '').trim();
+
+    if (!trimmedEmail || !trimmedPass) {
+      return { success: false, error: 'Email and password are required.' };
+    }
+
+    // Try server-side verification first
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email: trimmedEmail, password: trimmedPass })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.user) {
+          this.setCurrentUser(data.user);
+          // Also sync password locally so offline mode works
+          const localUsers = this.getUsers();
+          const idx = localUsers.findIndex((u) => u.id === data.user.id || u.email.toLowerCase() === trimmedEmail);
+          if (idx !== -1) {
+            localUsers[idx].password = trimmedPass;
+            this.saveUsers(localUsers);
+          }
+          return { success: true, user: data.user };
+        }
+      } else if (res.status === 401) {
+        const errData = await res.json().catch(() => ({}));
+        return { success: false, error: errData.error || 'Invalid corporate credentials.' };
+      }
+    } catch {
+      // Offline fallback: verify against local cache
+    }
+
+    return this.login(email, password);
   }
 
   logout() {
@@ -328,7 +376,9 @@ class AuthService {
       }).catch(() => {});
     } catch {}
 
-    return { success: true, user: newUser };
+    const sanitized = { ...newUser };
+    delete sanitized.password;
+    return { success: true, user: sanitized };
   }
 
   async updateUser(userId, updates) {
@@ -371,7 +421,9 @@ class AuthService {
       }).catch(() => {});
     } catch {}
 
-    return { success: true, user: updatedUser };
+    const sanitized = { ...updatedUser };
+    delete sanitized.password;
+    return { success: true, user: sanitized };
   }
 
   async deleteUser(userId, currentAdminId) {
@@ -421,7 +473,7 @@ class AuthService {
 
     // Push password update to Neon
     try {
-      fetch('/api/users', {
+      await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -429,7 +481,7 @@ class AuthService {
           userId,
           newPassword: newPassword.trim()
         })
-      }).catch(() => {});
+      });
     } catch {}
 
     return { success: true };

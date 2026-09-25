@@ -5,16 +5,17 @@
  * STRICT RESOURCE PRESERVATION:
  * 1. Neon auto-suspends after 5 minutes of inactivity.
  * 2. This service NEVER runs background polling loops or heartbeats.
- * 3. Uses connectionless HTTP fetch (port 443) via Cloudflare Pages /api endpoints.
+ * 3. Uses connectionless HTTP fetch (port 443) via Cloudflare /api endpoints.
  * 4. Local-first caching guarantees 100% functionality even during Neon cold boot or offline mode.
  */
 
-const LOCAL_STORAGE_KEY = 'doha_entertainment_ips_v2';
+// UNIFIED STORAGE KEY (Matches src/data/ips.js)
+const LOCAL_STORAGE_KEY = 'doha_entertainment_ips_react';
 const LAST_SYNC_KEY = 'doha_entertainment_ips_last_sync';
 
 export const NeonDbService = {
   /**
-   * Fetch IPs from Neon via Cloudflare Pages Function.
+   * Fetch IPs from Neon via Cloudflare /api/ips.
    * Falls back to local storage cache if server is unreachable or cold booting.
    */
   async getIps(fallbackData = []) {
@@ -24,20 +25,33 @@ export const NeonDbService = {
         headers: { 'Accept': 'application/json' }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
+      if (response.ok) {
+        const data = await response.json();
+        if (data.ips && data.ips.length > 0) {
+          // Normalize items and guarantee email_template & venue_fit
+          const normalized = data.ips.map(item => {
+            const fallback = fallbackData.find(f => f.id === item.id) || {};
+            const venueFitStr = typeof item.venue_fit === 'string'
+              ? item.venue_fit
+              : (Array.isArray(item.venue_fit) ? item.venue_fit.join(', ') : (item.venue_fit ? JSON.stringify(item.venue_fit) : ''));
 
-      const data = await response.json();
-      if (data.ips && data.ips.length > 0) {
-        // Cache to localStorage for offline and zero-ping access
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data.ips));
-        localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
-        return {
-          ips: data.ips,
-          source: data.source || 'neon-serverless',
-          status: 'connected'
-        };
+            return {
+              ...fallback,
+              ...item,
+              venue_fit: venueFitStr || fallback.venue_fit || '',
+              email_template: item.email_template || fallback.email_template || `Subject: Host Partnership Inquiry: ${item.title} in Doha\n\nDear ${item.producer || item.licensor} Team,\n\nWe are writing to explore hosting ${item.title} in Doha, Qatar. Best regards,`
+            };
+          });
+
+          // Cache to unified localStorage
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalized));
+          localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
+          return {
+            ips: normalized,
+            source: data.source || 'neon-serverless',
+            status: 'connected'
+          };
+        }
       }
     } catch (err) {
       console.warn('[NeonDbService] Using local cache (Neon sleeping or local dev mode):', err.message);
@@ -76,7 +90,7 @@ export const NeonDbService = {
       console.error('[NeonDbService] Failed to update local cache', e);
     }
 
-    // Push to Neon via Cloudflare Pages Function
+    // Push to Neon via Cloudflare /api/ips
     try {
       const response = await fetch('/api/ips', {
         method: 'POST',
@@ -95,6 +109,38 @@ export const NeonDbService = {
   },
 
   /**
+   * Permanently delete an IP from Neon and local cache.
+   */
+  async deleteIp(id) {
+    // 1. Remove from local cache immediately
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (cached) {
+        const currentList = JSON.parse(cached);
+        const filtered = currentList.filter(item => item.id !== id);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtered));
+      }
+    } catch (e) {
+      console.error('[NeonDbService] Failed removing from local cache', e);
+    }
+
+    // 2. Issue DELETE request to Neon API
+    try {
+      const response = await fetch(`/api/ips?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (response.ok) {
+        return { success: true, remoteDeleted: true };
+      }
+    } catch (err) {
+      console.warn('[NeonDbService] Remote delete deferred:', err.message);
+    }
+
+    return { success: true, remoteDeleted: false };
+  },
+
+  /**
    * Explicit one-click manual sync.
    * Only triggered by user gesture (no background polling loops).
    */
@@ -109,9 +155,24 @@ export const NeonDbService = {
       if (response.ok) {
         const result = await response.json();
         if (result.ips && result.ips.length > 0) {
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(result.ips));
+          // Normalize fields
+          const normalized = result.ips.map(item => {
+            const local = localIps.find(l => l.id === item.id) || {};
+            const venueFitStr = typeof item.venue_fit === 'string'
+              ? item.venue_fit
+              : (Array.isArray(item.venue_fit) ? item.venue_fit.join(', ') : (item.venue_fit ? JSON.stringify(item.venue_fit) : ''));
+
+            return {
+              ...local,
+              ...item,
+              venue_fit: venueFitStr || local.venue_fit || '',
+              email_template: item.email_template || local.email_template || ''
+            };
+          });
+
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalized));
           localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
-          return { success: true, ips: result.ips, source: result.source };
+          return { success: true, ips: normalized, source: result.source };
         }
       }
     } catch (err) {
