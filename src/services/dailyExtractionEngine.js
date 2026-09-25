@@ -460,9 +460,11 @@ function generateAlgorithmicCandidate(existingIPsCount = 0) {
 
   const pick = franchises[existingIPsCount % franchises.length];
   const catPick = categories[existingIPsCount % categories.length];
+  const cycle = Math.floor(existingIPsCount / franchises.length) + 1;
+  const suffix = cycle > 1 ? ` (Tour Series ${cycle})` : ' (Regional Season Edition)';
 
   return {
-    title: `${pick.title} (Regional Season Edition)`,
+    title: `${pick.title}${suffix}`,
     image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
     category: catPick.cat,
     licensor: pick.licensor,

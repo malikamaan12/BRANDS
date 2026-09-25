@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { loadIPs, saveIPs, resetIPs } from './data/ips';
+import { loadIPs, saveIPs, resetIPs, matchesCategory, isTodayLead } from './data/ips';
 import { checkAndTriggerDailyExtraction, extractBatchDailyIPs } from './services/dailyExtractionEngine';
 import { NeonDbService } from './services/neonDbService';
 import NavigationBar from './components/NavigationBar';
@@ -55,16 +55,65 @@ export default function App() {
     return () => { isMounted = false; };
   }, []);
 
-  // Count how many leads were discovered today / daily extracted
+  // Derived counts for lead origin
   const todayLeadsCount = useMemo(() => {
-    return ips.filter((ip) => {
-      return (
-        ip.isDailyDiscovered === true ||
-        Boolean(ip.extracted_at) ||
-        Boolean(ip.extracted_date) ||
-        parseInt((ip.id || '').replace('IP-', ''), 10) > 44
-      );
-    }).length;
+    return ips.filter((ip) => isTodayLead(ip)).length;
+  }, [ips]);
+
+  const coreLeadsCount = useMemo(() => {
+    return ips.filter((ip) => !isTodayLead(ip)).length;
+  }, [ips]);
+
+  // Unified Category Counts for Stats Overview and Filter Chips
+  const categoryCounts = useMemo(() => {
+    return {
+      all: ips.length,
+      today: todayLeadsCount,
+      theatrical: ips.filter((ip) => matchesCategory(ip.category, 'theatrical')).length,
+      exhibition: ips.filter((ip) => matchesCategory(ip.category, 'exhibition')).length,
+      arena: ips.filter((ip) => matchesCategory(ip.category, 'arena')).length,
+      fec: ips.filter((ip) => matchesCategory(ip.category, 'fec')).length,
+      concert: ips.filter((ip) => matchesCategory(ip.category, 'concert')).length,
+    };
+  }, [ips, todayLeadsCount]);
+
+  // Live Deal Stage Pipeline Counts
+  const statusCounts = useMemo(() => {
+    let active = 0;
+    let notContacted = 0;
+    let outreachSent = 0;
+    let inDiscussion = 0;
+    let termsReceived = 0;
+    let confirmed = 0;
+
+    ips.forEach((ip) => {
+      const s = ip.status || 'Not Contacted';
+      if (s !== 'Not Contacted') active++;
+      if (s === 'Not Contacted') notContacted++;
+      else if (s === 'Outreach Sent') outreachSent++;
+      else if (s === 'In Discussion') inDiscussion++;
+      else if (s === 'Terms Received') termsReceived++;
+      else if (s === 'Confirmed') confirmed++;
+    });
+
+    return { active, notContacted, outreachSent, inDiscussion, termsReceived, confirmed };
+  }, [ips]);
+
+  // Venue Counts
+  const venueCounts = useMemo(() => {
+    let qncc = 0, decc = 0, lusail = 0, katara = 0, malls = 0, aspire = 0;
+    ips.forEach((ip) => {
+      const v = typeof ip.venue_fit === 'string'
+        ? ip.venue_fit.toLowerCase()
+        : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ').toLowerCase() : '');
+      if (v.includes('qncc')) qncc++;
+      if (v.includes('decc')) decc++;
+      if (v.includes('lusail') || v.includes('abha')) lusail++;
+      if (v.includes('katara')) katara++;
+      if (v.includes('mall') || v.includes('place vendôme') || v.includes('vendome') || v.includes('festival city') || v.includes('msheireb')) malls++;
+      if (v.includes('aspire') || v.includes('al maha') || v.includes('outdoor')) aspire++;
+    });
+    return { qncc, decc, lusail, katara, malls, aspire };
   }, [ips]);
 
   // Persist to unified localStorage whenever IPs change
@@ -146,34 +195,17 @@ export default function App() {
       }
 
       // 2. Today's Lead / Origin filter
-      const isTodayLead =
-        ip.isDailyDiscovered === true ||
-        Boolean(ip.extracted_at) ||
-        Boolean(ip.extracted_date) ||
-        parseInt((ip.id || '').replace('IP-', ''), 10) > 44;
+      const isToday = isTodayLead(ip);
 
       if (filterLeadType === 'today' || filterCategory === 'today') {
-        if (!isTodayLead) return false;
+        if (!isToday) return false;
       } else if (filterLeadType === 'core') {
-        if (isTodayLead) return false;
+        if (isToday) return false;
       }
 
-      // 3. Category filter (skip if filterCategory is 'today' since handled above)
+      // 3. Category filter (standardized across entire app)
       if (filterCategory !== 'all' && filterCategory !== 'today') {
-        const cat = category;
-        if (filterCategory === 'theatrical' && !(cat.includes('stage') || cat.includes('theatrical') || cat.includes('musical') || cat.includes('puppet'))) {
-          return false;
-        }
-        if (filterCategory === 'exhibition' && !(cat.includes('exhibition') || cat.includes('walk-through') || cat.includes('experience') || cat.includes('museum'))) {
-          return false;
-        }
-        if (filterCategory === 'arena' && !(cat.includes('arena') || cat.includes('stunt') || cat.includes('ice') || cat.includes('motorsport'))) {
-          return false;
-        }
-        if (filterCategory === 'fec' && !(cat.includes('fec') || cat.includes('play') || cat.includes('inflatable') || cat.includes('pop-up') || cat.includes('sports'))) {
-          return false;
-        }
-        if (filterCategory === 'concert' && !(cat.includes('concert') || cat.includes('symphony') || cat.includes('orchestra'))) {
+        if (!matchesCategory(ip.category, filterCategory)) {
           return false;
         }
       }
@@ -191,7 +223,12 @@ export default function App() {
 
       // 5. Status filter
       if (filterStatus !== 'all') {
-        if (ip.status !== filterStatus) return false;
+        const currentStatus = ip.status || 'Not Contacted';
+        if (filterStatus === 'active') {
+          if (currentStatus === 'Not Contacted') return false;
+        } else if (currentStatus !== filterStatus) {
+          return false;
+        }
       }
 
       return true;
@@ -391,7 +428,17 @@ export default function App() {
         isSyncing={isSyncing}
       />
 
-      <StatsOverview ips={ips} />
+      <StatsOverview 
+        ips={ips}
+        filterCategory={filterCategory}
+        setFilterCategory={setFilterCategory}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        filterLeadType={filterLeadType}
+        setFilterLeadType={setFilterLeadType}
+        categoryCounts={categoryCounts}
+        statusCounts={statusCounts}
+      />
 
       <ControlBar
         viewMode={viewMode}
@@ -407,6 +454,10 @@ export default function App() {
         filterLeadType={filterLeadType}
         setFilterLeadType={setFilterLeadType}
         todayLeadsCount={todayLeadsCount}
+        coreLeadsCount={coreLeadsCount}
+        categoryCounts={categoryCounts}
+        statusCounts={statusCounts}
+        venueCounts={venueCounts}
         onExtractDailyIPs={handleExtractDailyIPs}
         filteredCount={filteredIPs.length}
         totalCount={ips.length}

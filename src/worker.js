@@ -53,7 +53,7 @@ export default {
             past_show_url TEXT,
             venue_fit TEXT,
             brand_details JSONB DEFAULT '{}'::jsonb,
-            status VARCHAR(32) DEFAULT 'Prospect',
+            status VARCHAR(32) DEFAULT 'Not Contacted',
             email_template TEXT,
             notes TEXT,
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -101,7 +101,7 @@ export default {
                 ${item.past_show_url || ''},
                 ${venueStr},
                 ${JSON.stringify(item.brand_details || {})}::jsonb,
-                ${item.status || 'Prospect'},
+                ${item.status || 'Not Contacted'},
                 ${item.email_template || ''},
                 ${item.notes || ''},
                 NOW()

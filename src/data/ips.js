@@ -885,6 +885,39 @@ export const INITIAL_IPS = [
 
 const STORAGE_KEY = 'doha_entertainment_ips_react';
 
+/**
+ * Standardized category matching helper across entire application
+ */
+export function matchesCategory(ipCategory = '', filterId = 'all') {
+  if (!filterId || filterId === 'all') return true;
+  const c = (ipCategory || '').toLowerCase();
+  switch (filterId) {
+    case 'theatrical':
+      return c.includes('stage') || c.includes('theat') || c.includes('musical') || c.includes('puppet') || c.includes('character show') || c.includes('broadway');
+    case 'exhibition':
+      return c.includes('exhibit') || c.includes('museum') || c.includes('walk-through') || c.includes('animatronic') || c.includes('art') || c.includes('immersive') || c.includes('gallery');
+    case 'arena':
+      return c.includes('arena') || c.includes('stunt') || c.includes('ice') || c.includes('motorsport') || c.includes('monster truck') || c.includes('acrobatic');
+    case 'fec':
+      return c.includes('fec') || c.includes('family entertainment center') || c.includes('inflatable') || c.includes('obstacle') || c.includes('play') || c.includes('sports') || c.includes('game') || c.includes('gaming') || c.includes('dark ride') || c.includes('role-playing');
+    case 'concert':
+      return c.includes('concert') || c.includes('symphony') || c.includes('orchestra') || c.includes('hologram') || c.includes('classical music') || c.includes('acoustic');
+    default:
+      return true;
+  }
+}
+
+/**
+ * Determine if an IP was discovered today or via daily discovery
+ */
+export function isTodayLead(ip) {
+  if (!ip) return false;
+  if (ip.isDailyDiscovered === true) return true;
+  if (ip.extracted_at || ip.extracted_date) return true;
+  const num = parseInt((ip.id || '').replace('IP-', ''), 10);
+  return !isNaN(num) && num > 44;
+}
+
 export function loadIPs() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -893,10 +926,12 @@ export function loadIPs() {
       if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed.map((item) => {
           const init = INITIAL_IPS.find((ip) => ip.id === item.id);
+          const normalizedStatus = (!item.status || item.status === 'Prospect') ? 'Not Contacted' : item.status;
           if (init) {
             return {
               ...init,
               ...item,
+              status: normalizedStatus,
               // Always guarantee enriched fields & verified images
               image: item.image || init.image,
               brand_details: item.brand_details || init.brand_details,
@@ -905,7 +940,10 @@ export function loadIPs() {
               website: item.website || init.website
             };
           }
-          return item;
+          return {
+            ...item,
+            status: normalizedStatus
+          };
         });
       }
     }

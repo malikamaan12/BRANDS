@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, LayoutGrid, Layers, Table, MapPin, X, Flame, RotateCcw } from 'lucide-react';
+import { Search, LayoutGrid, Layers, Table, MapPin, X, RotateCcw } from 'lucide-react';
 
 export default function ControlBar({
   viewMode,
@@ -15,6 +15,10 @@ export default function ControlBar({
   filterLeadType = 'all',
   setFilterLeadType,
   todayLeadsCount = 0,
+  coreLeadsCount = 0,
+  categoryCounts = {},
+  statusCounts = {},
+  venueCounts = {},
   onExtractDailyIPs,
   filteredCount,
   totalCount
@@ -29,16 +33,27 @@ export default function ControlBar({
 
   const isTodayActive = filterLeadType === 'today' || filterCategory === 'today';
 
-  const handleToggleTodayFilter = () => {
-    if (isTodayActive) {
-      setFilterLeadType('all');
-      if (filterCategory === 'today') setFilterCategory('all');
-    } else {
-      if (todayLeadsCount === 0 && onExtractDailyIPs) {
-        onExtractDailyIPs();
+  const handleChipClick = (chipId) => {
+    if (chipId === 'today') {
+      if (isTodayActive) {
+        setFilterLeadType('all');
+        if (filterCategory === 'today') setFilterCategory('all');
+      } else {
+        if (todayLeadsCount === 0 && onExtractDailyIPs) {
+          onExtractDailyIPs();
+        }
+        setFilterLeadType('today');
+        setFilterCategory('today');
       }
-      setFilterLeadType('today');
-      setFilterCategory('today');
+    } else {
+      if (filterCategory === chipId && filterLeadType !== 'today') {
+        setFilterCategory('all');
+      } else {
+        setFilterCategory(chipId);
+        if (filterCategory === 'today') {
+          setFilterLeadType('all');
+        }
+      }
     }
   };
 
@@ -51,7 +66,7 @@ export default function ControlBar({
   };
 
   const CATEGORY_CHIPS = [
-    { id: 'all', label: 'All Formats', icon: '✨' },
+    { id: 'all', label: 'All Formats', icon: '✨', count: totalCount },
     { 
       id: 'today', 
       label: "Today's Leads", 
@@ -60,11 +75,11 @@ export default function ControlBar({
       isFlame: true,
       tooltip: "Show newly extracted daily properties (Zero duplicates)"
     },
-    { id: 'theatrical', label: 'Stage & Musicals', icon: '🎭' },
-    { id: 'exhibition', label: 'Exhibitions & Immersive', icon: '🏛️' },
-    { id: 'arena', label: 'Arena & Stunts', icon: '🏎️' },
-    { id: 'fec', label: 'Family Play & FEC', icon: '🎪' },
-    { id: 'concert', label: 'Live Symphony', icon: '🎻' }
+    { id: 'theatrical', label: 'Stage & Musicals', icon: '🎭', count: categoryCounts?.theatrical ?? 0 },
+    { id: 'exhibition', label: 'Exhibitions & Immersive', icon: '🏛️', count: categoryCounts?.exhibition ?? 0 },
+    { id: 'arena', label: 'Arena & Stunts', icon: '🏎️', count: categoryCounts?.arena ?? 0 },
+    { id: 'fec', label: 'Family Play & FEC', icon: '🎪', count: categoryCounts?.fec ?? 0 },
+    { id: 'concert', label: 'Live Symphony', icon: '🎻', count: categoryCounts?.concert ?? 0 }
   ];
 
   return (
@@ -91,6 +106,7 @@ export default function ControlBar({
                 className="apple-search-clear-minimal"
                 title="Clear search"
                 aria-label="Clear search"
+                type="button"
               >
                 <X size={13} />
               </button>
@@ -105,6 +121,7 @@ export default function ControlBar({
               title="Cards Grid"
               role="tab"
               aria-selected={viewMode === 'cards'}
+              type="button"
             >
               <LayoutGrid size={14} />
               <span>Cards</span>
@@ -116,6 +133,7 @@ export default function ControlBar({
               title="3D Spatial Deck Showcase"
               role="tab"
               aria-selected={viewMode === 'deck3d'}
+              type="button"
             >
               <Layers size={14} />
               <span>3D Deck</span>
@@ -127,6 +145,7 @@ export default function ControlBar({
               title="Dense Table"
               role="tab"
               aria-selected={viewMode === 'table'}
+              type="button"
             >
               <Table size={14} />
               <span>Table</span>
@@ -138,6 +157,7 @@ export default function ControlBar({
               title="Deal Pipeline Kanban"
               role="tab"
               aria-selected={viewMode === 'kanban'}
+              type="button"
             >
               <span style={{ display: 'inline-flex', gap: 2 }}>
                 <span style={{ width: 2, height: 10, background: 'currentColor', borderRadius: 1 }}></span>
@@ -153,6 +173,7 @@ export default function ControlBar({
               title="Venues Matrix"
               role="tab"
               aria-selected={viewMode === 'venues'}
+              type="button"
             >
               <MapPin size={14} />
               <span>Venues</span>
@@ -172,6 +193,7 @@ export default function ControlBar({
                 className="minimal-reset-btn"
                 onClick={handleResetFilters}
                 title="Reset all search queries and filters"
+                type="button"
               >
                 <RotateCcw size={12} />
                 <span>Reset</span>
@@ -187,20 +209,17 @@ export default function ControlBar({
           {/* Quick Filter Pill Chips Carousel */}
           <div className="minimal-chips-carousel" role="toolbar" aria-label="Category quick filters">
             {CATEGORY_CHIPS.map((chip) => {
-              const isSelected = chip.id === 'today' ? isTodayActive : filterCategory === chip.id;
+              const isSelected = chip.id === 'today'
+                ? isTodayActive
+                : (filterCategory === chip.id && !isTodayActive);
+
               return (
                 <button
                   key={chip.id}
                   className={`chip-pill-minimal ${chip.isFlame ? 'chip-flame' : ''} ${isSelected ? 'active' : ''}`}
-                  onClick={() => {
-                    if (chip.id === 'today') {
-                      handleToggleTodayFilter();
-                    } else {
-                      if (filterLeadType === 'today') setFilterLeadType('all');
-                      setFilterCategory(chip.id);
-                    }
-                  }}
+                  onClick={() => handleChipClick(chip.id)}
                   title={chip.tooltip || `Filter by ${chip.label}`}
+                  type="button"
                 >
                   <span className="chip-icon">{chip.icon}</span>
                   <span className="chip-text">{chip.label}</span>
@@ -225,13 +244,13 @@ export default function ControlBar({
                 onChange={(e) => setFilterVenue(e.target.value)}
                 aria-label="Filter by venue"
               >
-                <option value="all">📍 All Venues</option>
-                <option value="qncc">QNCC Theater</option>
-                <option value="decc">DECC Exhibition</option>
-                <option value="lusail">Lusail Arena</option>
-                <option value="katara">Katara Village</option>
-                <option value="malls">Luxury Malls</option>
-                <option value="aspire">Aspire Zone</option>
+                <option value="all">📍 All Venues ({totalCount})</option>
+                <option value="qncc">QNCC Theater ({venueCounts?.qncc ?? 0})</option>
+                <option value="decc">DECC Exhibition ({venueCounts?.decc ?? 0})</option>
+                <option value="lusail">Lusail Arena ({venueCounts?.lusail ?? 0})</option>
+                <option value="katara">Katara Village ({venueCounts?.katara ?? 0})</option>
+                <option value="malls">Luxury Malls ({venueCounts?.malls ?? 0})</option>
+                <option value="aspire">Aspire Zone ({venueCounts?.aspire ?? 0})</option>
               </select>
             </div>
 
@@ -243,12 +262,13 @@ export default function ControlBar({
                 onChange={(e) => setFilterStatus(e.target.value)}
                 aria-label="Filter by deal status"
               >
-                <option value="all">📊 All Stages</option>
-                <option value="Not Contacted">1. Not Contacted</option>
-                <option value="Outreach Sent">2. Outreach Sent</option>
-                <option value="In Discussion">3. In Discussion</option>
-                <option value="Terms Received">4. Terms Received</option>
-                <option value="Confirmed">5. Confirmed</option>
+                <option value="all">📊 All Stages ({totalCount})</option>
+                <option value="active">⚡ Active Pipeline ({statusCounts?.active ?? 0})</option>
+                <option value="Not Contacted">1. Not Contacted ({statusCounts?.notContacted ?? 0})</option>
+                <option value="Outreach Sent">2. Outreach Sent ({statusCounts?.outreachSent ?? 0})</option>
+                <option value="In Discussion">3. In Discussion ({statusCounts?.inDiscussion ?? 0})</option>
+                <option value="Terms Received">4. Terms Received ({statusCounts?.termsReceived ?? 0})</option>
+                <option value="Confirmed">5. Confirmed ({statusCounts?.confirmed ?? 0})</option>
               </select>
             </div>
 
@@ -260,14 +280,17 @@ export default function ControlBar({
                 onChange={(e) => {
                   const val = e.target.value;
                   setFilterLeadType(val);
-                  if (val === 'today') setFilterCategory('today');
-                  else if (filterCategory === 'today') setFilterCategory('all');
+                  if (val === 'today') {
+                    setFilterCategory('today');
+                  } else if (filterCategory === 'today') {
+                    setFilterCategory('all');
+                  }
                 }}
                 aria-label="Filter by lead date"
               >
-                <option value="all">📅 All Dates</option>
-                <option value="today">🔥 Today ({todayLeadsCount})</option>
-                <option value="core">💎 Core (44)</option>
+                <option value="all">📅 All Dates ({totalCount})</option>
+                <option value="today">🔥 Today's Leads ({todayLeadsCount})</option>
+                <option value="core">💎 Core Portfolio ({coreLeadsCount})</option>
               </select>
             </div>
 

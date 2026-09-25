@@ -586,9 +586,35 @@ body::after {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.25rem 0.75rem;
+  padding: 0.35rem 0.85rem;
   flex: 1;
-  min-width: 160px;
+  min-width: 140px;
+}
+
+.stat-item.interactive {
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-xs);
+  transition: all var(--transition-fast);
+}
+
+.stat-item.interactive:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.stat-item.interactive:active {
+  transform: translateY(0);
+}
+
+.stat-item.interactive.active {
+  background: rgba(139, 92, 246, 0.18);
+  border: 1px solid rgba(167, 139, 250, 0.5);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.25);
+}
+
+.stat-item.interactive.active .stat-item-label {
+  color: #ffffff;
 }
 
 .stat-item + .stat-item {
@@ -851,16 +877,10 @@ body::after {
 .minimal-chips-carousel {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  gap: 0.45rem;
+  flex-wrap: wrap;
   flex: 1;
-  min-width: 260px;
-}
-
-.minimal-chips-carousel::-webkit-scrollbar {
-  display: none;
+  min-width: 280px;
 }
 
 .chip-pill-minimal {
@@ -921,6 +941,32 @@ body::after {
 .chip-pill-minimal.chip-flame.active .chip-flame-count {
   background: #f59e0b !important;
   color: #060813 !important;
+}
+
+.chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.chip-pill-minimal:hover .chip-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.chip-pill-minimal.active .chip-count {
+  background: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
 }
 
 /* Minimal Inline Selects Cluster */
