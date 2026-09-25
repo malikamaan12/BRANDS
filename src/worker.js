@@ -210,7 +210,7 @@ export default {
                 ${item.past_show_url || ''},
                 ${venueStr},
                 ${JSON.stringify(item.brand_details || {})}::jsonb,
-                ${item.status || 'Prospect'},
+                ${item.status || 'Not Contacted'},
                 ${item.email_template || ''},
                 ${item.notes || ''},
                 NOW()
@@ -481,7 +481,7 @@ export default {
 
             const prompt = `Search the web for 5 REAL, active international touring entertainment properties, exhibitions, or arena shows touring in 2025-2026. Focus: ${queryFocus || 'Family entertainment, arena spectacles, and immersive exhibitions'}. Return ONLY a strict JSON array of objects with keys: "title", "category", "licensor", "producer", "person", "email", "website", "linkedin_url", "past_shows", "venue_fit", "brand_details", "notes". Doha venues: QNCC, DECC, Lusail Arena, Katara, Place Vendôme. Output raw JSON only.`;
 
-            const models = ['gemini-flash-latest', 'gemini-3.5-flash-lite'];
+            const models = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
             let aiJson = null;
             let lastErr = null;
 

@@ -54,12 +54,14 @@ export default function TableView({ ips, onOpenDossier, onOpenPitch, currentUser
                 </td>
 
                 <td>
-                  <span className="venue-tag-pill">{ip.venue_fit}</span>
+                  <span className="venue-tag-pill">
+                    {typeof ip.venue_fit === 'string' ? ip.venue_fit : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : '')}
+                  </span>
                 </td>
 
                 <td>
-                  <span className={`status-pill ${statusClass}`}>
-                    {ip.status}
+                  <span className={`status-pill ${getStatusClass(ip.status || 'Not Contacted')}`}>
+                    {ip.status || 'Not Contacted'}
                   </span>
                 </td>
 

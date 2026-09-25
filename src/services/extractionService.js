@@ -336,8 +336,8 @@ Output ONLY raw JSON. Do not include markdown codeblocks or extra text.`;
     ? `Search the web for newly touring global entertainment properties matching this focus: "${queryFocus}". Return verified real productions.`
     : `Search the web for top global touring entertainment IPs, immersive exhibitions, and arena spectacles touring internationally in 2025-2026 suitable for Qatar.`;
 
-  // Use gemini-flash-latest with automatic fallback to gemini-3.5-flash-lite
-  const models = ['gemini-flash-latest', 'gemini-3.5-flash-lite'];
+  // Prioritized model fallback list for high-demand resilience
+  const models = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
   let responseData = null;
   let lastError = null;
 

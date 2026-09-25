@@ -62,6 +62,23 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
 
   const isAdmin = currentUser?.role === 'admin';
 
+  if (!isAdmin) {
+    return (
+      <div className="modal-backdrop" onClick={onClose}>
+        <div className="glass-modal" style={{ padding: '2.5rem 2rem', textAlign: 'center', maxWidth: 420, borderRadius: '24px', background: 'rgba(12, 16, 32, 0.96)' }}>
+          <ShieldAlert size={42} color="#ef4444" style={{ margin: '0 auto 1rem', display: 'block' }} />
+          <h3 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '0.5rem' }}>Access Restricted</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+            Administrator authorization is required to access the User Provisioning & Permissions Panel.
+          </p>
+          <button className="apple-btn primary" onClick={onClose} style={{ marginTop: '1.5rem', width: '100%' }}>
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Filtered users calculation
   const filteredUsers = users.filter((u) => {
     if (filterRole !== 'all' && u.role !== filterRole) return false;

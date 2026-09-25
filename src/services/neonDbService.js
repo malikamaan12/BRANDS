@@ -38,6 +38,7 @@ export const NeonDbService = {
             return {
               ...fallback,
               ...item,
+              status: (!item.status || item.status === 'Prospect') ? (fallback.status || 'Not Contacted') : item.status,
               venue_fit: venueFitStr || fallback.venue_fit || '',
               email_template: item.email_template || fallback.email_template || `Subject: Host Partnership Inquiry: ${item.title} in Doha\n\nDear ${item.producer || item.licensor} Team,\n\nWe are writing to explore hosting ${item.title} in Doha, Qatar. Best regards,`
             };
@@ -69,6 +70,13 @@ export const NeonDbService = {
     }
 
     return { ips: fallbackData, source: 'seed-bundle', status: 'seed' };
+  },
+
+  /**
+   * Push IPs alias for upsertIps.
+   */
+  async pushIps(ips) {
+    return this.upsertIps(ips);
   },
 
   /**
@@ -165,6 +173,7 @@ export const NeonDbService = {
             return {
               ...local,
               ...item,
+              status: (!item.status || item.status === 'Prospect') ? (local.status || 'Not Contacted') : item.status,
               venue_fit: venueFitStr || local.venue_fit || '',
               email_template: item.email_template || local.email_template || ''
             };

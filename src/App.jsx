@@ -260,7 +260,7 @@ export default function App() {
   // Quick advance pipeline stage for Kanban
   const handleAdvanceStatus = (ip) => {
     const sequence = ['Not Contacted', 'Outreach Sent', 'In Discussion', 'Terms Received', 'Confirmed'];
-    const currentIndex = sequence.indexOf(ip.status);
+    const currentIndex = sequence.indexOf(ip.status || 'Not Contacted');
     if (currentIndex < sequence.length - 1) {
       const nextStatus = sequence[currentIndex + 1];
       const updated = { ...ip, status: nextStatus };

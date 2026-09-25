@@ -13,7 +13,7 @@ export default function KanbanView({ ips, onOpenDossier, onAdvanceStatus }) {
   return (
     <div className="kanban-grid">
       {STAGES.map((stage) => {
-        const stageIPs = ips.filter((ip) => ip.status === stage.id);
+        const stageIPs = ips.filter((ip) => (ip.status || 'Not Contacted') === stage.id);
 
         return (
           <div key={stage.id} className="kanban-col">

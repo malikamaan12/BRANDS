@@ -222,7 +222,7 @@ export default function DeckView3D({
 
             return (
               <div
-                key={ip.id}
+                key={`${ip.id || index}-${depthOffset}`}
                 className={`deck-fanned-card ${isFront ? 'is-front' : 'is-stacked'}`}
                 style={{
                   transform: `translateX(${translateX}px) translateY(${translateY}px) translateZ(${translateZ}px)`,
@@ -314,7 +314,7 @@ export default function DeckView3D({
                       {/* Doha Target Fit */}
                       <div className="deck-venue-badge">
                         <MapPin size={13} style={{ color: '#fca5a5' }} />
-                        <span>{ip.venue_fit}</span>
+                        <span>{typeof ip.venue_fit === 'string' ? ip.venue_fit : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : (ip.venue_fit || ''))}</span>
                       </div>
 
                       {/* Tour Benchmark */}
@@ -358,7 +358,7 @@ export default function DeckView3D({
 
                   {!isFront && (
                     <div className="deck-mini-venue">
-                      <span>{ip.venue_fit.split(';')[0]}</span>
+                      <span>{typeof ip.venue_fit === 'string' ? ip.venue_fit.split(';')[0] : (Array.isArray(ip.venue_fit) ? ip.venue_fit[0] : (ip.venue_fit || ''))}</span>
                     </div>
                   )}
 

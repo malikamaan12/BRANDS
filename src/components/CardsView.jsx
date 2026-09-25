@@ -95,7 +95,7 @@ export default function CardsView({
                 {/* Interactive Status Selector */}
                 <select
                   className="card-status-dropdown"
-                  value={ip.status}
+                  value={ip.status || 'Not Contacted'}
                   onChange={(e) => onUpdateStatus(ip, e.target.value)}
                   onClick={(e) => e.stopPropagation()}
                 >
