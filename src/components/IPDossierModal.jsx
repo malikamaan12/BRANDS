@@ -3,7 +3,7 @@ import {
   X, Copy, Check, Send, ExternalLink, Mail, Building, User, 
   MapPin, Sparkles, FileText, NotebookText, ArrowUpRight, 
   Globe, Award, Calendar, CheckCircle2, ChevronRight, Layers, Play,
-  Trash2, Lock, Shield, History
+  Trash2, Lock, Shield, History, Share2
 } from 'lucide-react';
 import { getCategoryFallbackImage } from './CardsView';
 
@@ -20,6 +20,8 @@ export default function IPDossierModal({
   const [copiedPitch, setCopiedPitch] = useState(false);
   const [copiedSubject, setCopiedSubject] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedWebsite, setCopiedWebsite] = useState(false);
+  const [copiedSocial, setCopiedSocial] = useState(false);
   const [notes, setNotes] = useState(ip?.notes || '');
   const [status, setStatus] = useState(ip?.status || 'Not Contacted');
 
@@ -91,6 +93,23 @@ export default function IPDossierModal({
     setCopiedEmail(true);
     onShowToast?.('Outreach email copied to clipboard');
     setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
+  const handleCopyWebsite = () => {
+    if (!ip.website) return;
+    navigator.clipboard.writeText(ip.website);
+    setCopiedWebsite(true);
+    onShowToast?.('Website link copied to clipboard');
+    setTimeout(() => setCopiedWebsite(false), 2000);
+  };
+
+  const handleCopySocial = () => {
+    const socialUrl = ip.linkedin_url || (ip.social?.includes('http') ? ip.social : `https://${ip.social?.split('|')[0]?.trim()}`);
+    if (!socialUrl) return;
+    navigator.clipboard.writeText(socialUrl);
+    setCopiedSocial(true);
+    onShowToast?.('Social link copied to clipboard');
+    setTimeout(() => setCopiedSocial(false), 2000);
   };
 
   const handleLaunchMail = () => {
@@ -265,6 +284,94 @@ export default function IPDossierModal({
               )}
             </div>
 
+            {/* Quick Outreach & Channels Card (Email, Website, Social with 1-Click Copy) */}
+            <div className="dossier-quick-channels">
+              {/* Email Row */}
+              <div className="dossier-channel-item">
+                <div className="dossier-channel-icon-wrap" style={{ color: '#fde047' }}>
+                  <Mail size={13} />
+                </div>
+                <div className="dossier-channel-info">
+                  <span className="dossier-channel-label">Outreach Email</span>
+                  <a 
+                    href={`mailto:${(ip.email || '').split(/[\/,|]/)[0]?.trim() || ''}`}
+                    className="dossier-channel-link mono"
+                    title={ip.email}
+                  >
+                    {(ip.email || '').split(/[\/,|]/)[0]?.trim() || 'licensing@eeeqa.com'}
+                  </a>
+                </div>
+                <button 
+                  type="button"
+                  className="dossier-channel-copy-btn"
+                  onClick={() => handleCopyEmail((ip.email || '').split(/[\/,|]/)[0]?.trim())}
+                  title="Copy email address"
+                >
+                  {copiedEmail ? <Check size={12} style={{ color: '#10b981' }} /> : <Copy size={12} />}
+                </button>
+              </div>
+
+              {/* Website Row */}
+              {ip.website && (
+                <div className="dossier-channel-item">
+                  <div className="dossier-channel-icon-wrap" style={{ color: '#38bdf8' }}>
+                    <Globe size={13} />
+                  </div>
+                  <div className="dossier-channel-info">
+                    <span className="dossier-channel-label">Official Website</span>
+                    <a 
+                      href={ip.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="dossier-channel-link"
+                      title={ip.website}
+                    >
+                      {ip.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+                      <ArrowUpRight size={10} style={{ marginLeft: 3, opacity: 0.7 }} />
+                    </a>
+                  </div>
+                  <button 
+                    type="button"
+                    className="dossier-channel-copy-btn"
+                    onClick={handleCopyWebsite}
+                    title="Copy website link"
+                  >
+                    {copiedWebsite ? <Check size={12} style={{ color: '#10b981' }} /> : <Copy size={12} />}
+                  </button>
+                </div>
+              )}
+
+              {/* Social / Digital Presence Row */}
+              {(ip.linkedin_url || ip.social) && (
+                <div className="dossier-channel-item">
+                  <div className="dossier-channel-icon-wrap" style={{ color: '#c084fc' }}>
+                    <Share2 size={13} />
+                  </div>
+                  <div className="dossier-channel-info">
+                    <span className="dossier-channel-label">Social & Digital</span>
+                    <a 
+                      href={ip.linkedin_url || (ip.social?.includes('http') ? ip.social : `https://${ip.social?.split('|')[0]?.trim()}`)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="dossier-channel-link"
+                      title={ip.social || ip.linkedin_url}
+                    >
+                      {ip.social?.split('|')[0]?.trim() || 'LinkedIn Company'}
+                      <ArrowUpRight size={10} style={{ marginLeft: 3, opacity: 0.7 }} />
+                    </a>
+                  </div>
+                  <button 
+                    type="button"
+                    className="dossier-channel-copy-btn"
+                    onClick={handleCopySocial}
+                    title="Copy social link"
+                  >
+                    {copiedSocial ? <Check size={12} style={{ color: '#10b981' }} /> : <Copy size={12} />}
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Primary Action Buttons */}
             <div className="dossier-left-actions">
               <button 
@@ -283,33 +390,21 @@ export default function IPDossierModal({
                 <span>{copiedPitch ? 'Copied to Clipboard' : 'Copy Pitch Letter'}</span>
               </button>
 
-              <div className="dossier-links-row">
-                {ip.website && (
-                  <a 
-                    href={ip.website} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="dossier-link-chip"
-                  >
-                    <Globe size={12} />
-                    <span>Website</span>
-                    <ArrowUpRight size={11} />
-                  </a>
-                )}
-                {ip.past_show_url && (
-                  <a 
-                    href={ip.past_show_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="dossier-link-chip"
-                  >
-                    <Play size={11} />
-                    <span>Watch Video</span>
-                    <ArrowUpRight size={11} />
-                  </a>
-                )}
-              </div>
+              {ip.past_show_url && (
+                <a 
+                  href={ip.past_show_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="dossier-link-chip"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                >
+                  <Play size={11} />
+                  <span>Watch Live Performance Clip</span>
+                  <ArrowUpRight size={11} />
+                </a>
+              )}
             </div>
+
 
           </div>
 
