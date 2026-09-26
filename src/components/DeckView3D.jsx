@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   ArrowUpRight, 
   ExternalLink, 
@@ -9,29 +9,40 @@ import {
   Play, 
   Pause, 
   Maximize2,
+  Minimize2,
   Sparkles,
   MapPin,
   Calendar,
   Layers,
   RotateCw,
-  RotateCcw
+  RotateCcw,
+  Clock,
+  Compass,
+  FileText,
+  Mail,
+  Send,
+  Eye,
+  Sliders,
+  Tv
 } from 'lucide-react';
 import FrostedHexagon from './FrostedHexagon';
-import { getIPTheme } from './CardsView';
+import { getIPTheme, getCategoryFallbackImage } from './CardsView';
 
 /**
  * DeckView3D
  * 
- * Recreates the exact 3D isometric fanned card deck from Image 1.
+ * High-performance 3D Spatial Deck & Presentation Showcase.
  * Features:
- * - Real 3D isometric perspective fan receding into deep space
- * - Spotlighted front card with illuminated floor platform & glowing emblem
- * - Interactive fan navigation (click any card to bring to front, arrows, autoplay)
- * - Live pitch email copy & dossier modal trigger
- * - Mobile responsive adaptive tilt
+ * - Spatial 3D Coverflow Stage (Center spotlight with left/right receding wings)
+ * - Isometric Fan Deck mode with live angle tilt control
+ * - Full Screen Presentation Mode (Cinematic full-viewport immersive experience)
+ * - Auto Play with Live Progress Countdown & Hover-to-Pause
+ * - Quick Pitch Copy & Direct Dossier Modal Triggers
+ * - Touch / Swipe Gesture support for tablet and mobile
+ * - Responsive 3D geometry preventing off-screen clipping
  */
 export default function DeckView3D({ 
-  ips, 
+  ips = [], 
   onOpenDossier, 
   onOpenPitch, 
   onUpdateStatus, 
@@ -39,11 +50,19 @@ export default function DeckView3D({
   onResetFilters
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [deckMode, setDeckMode] = useState('spatial'); // 'spatial' | 'isometric'
   const [isAutoplay, setIsAutoplay] = useState(false);
+  const [autoplaySpeed, setAutoplaySpeed] = useState(4000); // 2500, 4000, 6000
+  const [autoplayProgress, setAutoplayProgress] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
-  const [rotationAngle, setRotationAngle] = useState(-20); // Base rotateY angle
+  const [rotationAngle, setRotationAngle] = useState(-18); // Base rotateY angle for isometric mode
+  
   const timerRef = useRef(null);
   const filmstripRef = useRef(null);
+  const containerRef = useRef(null);
+  const touchStartXRef = useRef(null);
 
   // Auto-scroll active capsule into view in the 3D dock
   useEffect(() => {
@@ -69,39 +88,113 @@ export default function DeckView3D({
     }
   }, [ips.length]);
 
-  // Autoplay loop
+  // Autoplay progression with live countdown progress
   useEffect(() => {
-    if (isAutoplay && ips.length > 1) {
-      timerRef.current = setInterval(() => {
-        setActiveIndex((prev) => (prev + 1) % ips.length);
-      }, 3200);
-    } else {
+    if (!isAutoplay || ips.length <= 1) {
+      setAutoplayProgress(0);
       if (timerRef.current) clearInterval(timerRef.current);
+      return;
     }
+
+    if (isHovered) {
+      // Pause countdown while user inspects or interacts with the card
+      return;
+    }
+
+    const stepMs = 50;
+    const progressPerStep = (stepMs / autoplaySpeed) * 100;
+
+    timerRef.current = setInterval(() => {
+      setAutoplayProgress((prev) => {
+        if (prev >= 100) {
+          setActiveIndex((current) => (current + 1) % ips.length);
+          return 0;
+        }
+        return prev + progressPerStep;
+      });
+    }, stepMs);
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isAutoplay, ips.length]);
+  }, [isAutoplay, autoplaySpeed, isHovered, ips.length]);
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        setActiveIndex((prev) => (prev + 1) % ips.length);
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        setActiveIndex((prev) => (prev - 1 + ips.length) % ips.length);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+  // Navigation handlers
+  const handleNext = useCallback(() => {
+    setAutoplayProgress(0);
+    setActiveIndex((prev) => (prev + 1) % ips.length);
   }, [ips.length]);
 
-  const handleNext = () => {
-    setActiveIndex((prev) => (prev + 1) % ips.length);
+  const handlePrev = useCallback(() => {
+    setAutoplayProgress(0);
+    setActiveIndex((prev) => (prev - 1 + ips.length) % ips.length);
+  }, [ips.length]);
+
+  // Fullscreen toggle handler
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      setIsFullscreen(true);
+      if (containerRef.current?.requestFullscreen) {
+        containerRef.current.requestFullscreen().catch(() => {});
+      }
+    } else {
+      setIsFullscreen(false);
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
   };
 
-  const handlePrev = () => {
-    setActiveIndex((prev) => (prev - 1 + ips.length) % ips.length);
+  // Sync fullscreen change from browser (e.g. user pressed Esc)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Keyboard navigation & shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        setIsAutoplay((prev) => !prev);
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      } else if (e.key === 'Enter') {
+        if (ips[activeIndex]) onOpenDossier(ips[activeIndex]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [ips, activeIndex, isFullscreen, handleNext, handlePrev, onOpenDossier]);
+
+  // Touch Swipe handlers for mobile / tablet
+  const handleTouchStart = (e) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartXRef.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartXRef.current;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) handlePrev();
+      else handleNext();
+    }
+    touchStartXRef.current = null;
   };
 
   const handleQuickCopy = (e, ip) => {
@@ -139,54 +232,152 @@ export default function DeckView3D({
   const activeIP = ips[activeIndex] || ips[0];
   const activeTheme = getIPTheme(activeIP);
 
-  // We display up to 7 cards in the visible 3D fan stack
-  const visibleCardsCount = Math.min(ips.length, 7);
-  const cardIndices = [];
-  for (let i = 0; i < visibleCardsCount; i++) {
-    const idx = (activeIndex + i) % ips.length;
-    cardIndices.push({ index: idx, depthOffset: i, ip: ips[idx] });
+  // Compute 3D Card Items depending on Mode
+  let cardIndices = [];
+  if (deckMode === 'spatial') {
+    // Spatial 3D Coverflow Stage: Centered with left and right wings
+    const visibleRange = Math.min(ips.length, 5); // 5 visible cards: -2, -1, 0, 1, 2
+    const halfRange = Math.floor(visibleRange / 2);
+    for (let offset = -halfRange; offset <= halfRange; offset++) {
+      const rawIdx = (activeIndex + offset) % ips.length;
+      const idx = rawIdx < 0 ? rawIdx + ips.length : rawIdx;
+      cardIndices.push({
+        index: idx,
+        offset: offset,
+        ip: ips[idx]
+      });
+    }
+  } else {
+    // Isometric Fan Deck Mode: Layered depth stack
+    const visibleCardsCount = Math.min(ips.length, 6);
+    for (let i = 0; i < visibleCardsCount; i++) {
+      const idx = (activeIndex + i) % ips.length;
+      cardIndices.push({
+        index: idx,
+        depthOffset: i,
+        ip: ips[idx]
+      });
+    }
+    cardIndices.reverse(); // Front card renders on top
   }
-  // Reverse so the front card (depthOffset 0) renders on top in DOM order
-  cardIndices.reverse();
 
   return (
-    <div className="deck-3d-container">
+    <div 
+      ref={containerRef}
+      className={`deck-3d-container ${isFullscreen ? 'deck-fullscreen-mode' : ''}`}
+    >
       
-      {/* 3D Deck Controls & Status Header */}
+      {/* =========================================================
+          3D CONTROLS HEADER BAR
+         ========================================================= */}
       <div className="deck-3d-header">
+        
+        {/* Left: Property Info & Counter Badge */}
         <div className="deck-info-badge">
           <Layers size={15} style={{ color: activeTheme.glowColor }} />
-          <span>3D Spatial Deck Showcase</span>
+          <span className="deck-brand-label">3D Spatial Deck</span>
           <span className="deck-counter-pill">{activeIndex + 1} of {ips.length}</span>
+          
+          {/* Active IP Quick Chip */}
+          <span className="deck-active-ip-chip" style={{ borderColor: activeTheme.glowColor }}>
+            {activeIP.title}
+          </span>
         </div>
 
-        <div className="deck-action-controls">
-          {/* Autoplay Toggle */}
+        {/* Center: Presentation Mode Selector */}
+        <div className="deck-mode-segmented-ctrl">
           <button 
-            className={`deck-ctrl-btn ${isAutoplay ? 'active' : ''}`}
-            onClick={() => setIsAutoplay(!isAutoplay)}
-            title={isAutoplay ? "Pause 3D carousel autoplay" : "Start 3D carousel autoplay"}
+            type="button"
+            className={`deck-mode-pill ${deckMode === 'spatial' ? 'active' : ''}`}
+            onClick={() => setDeckMode('spatial')}
+            title="Symmetrical 3D Coverflow Stage"
           >
-            {isAutoplay ? <Pause size={14} /> : <Play size={14} />}
-            <span>{isAutoplay ? "Playing" : "Autoplay"}</span>
+            <span>Spatial Stage</span>
           </button>
+          <button 
+            type="button"
+            className={`deck-mode-pill ${deckMode === 'isometric' ? 'active' : ''}`}
+            onClick={() => setDeckMode('isometric')}
+            title="Isometric Layered Fan Deck"
+          >
+            <span>Isometric Fan</span>
+          </button>
+        </div>
 
-          {/* Perspective angle adjustment */}
-          <div className="deck-tilt-slider" title="Adjust 3D perspective angle">
-            <RotateCw size={13} style={{ color: 'var(--text-tertiary)' }} />
-            <input 
-              type="range" 
-              min="-35" 
-              max="-5" 
-              value={rotationAngle}
-              onChange={(e) => setRotationAngle(Number(e.target.value))}
-              aria-label="3D Rotate Angle"
-            />
+        {/* Right: Autoplay, Tilt, Fullscreen & Arrows */}
+        <div className="deck-action-controls">
+          
+          {/* Autoplay Toggle Button with Live Progress Fill */}
+          <div className="deck-autoplay-widget">
+            <button 
+              type="button"
+              className={`deck-ctrl-btn deck-autoplay-btn ${isAutoplay ? 'active' : ''}`}
+              onClick={() => setIsAutoplay(!isAutoplay)}
+              title={isAutoplay ? "Pause auto-presentation (Space)" : "Start auto-presentation (Space)"}
+            >
+              {isAutoplay ? (
+                <Pause size={13} style={{ color: '#fbbf24' }} />
+              ) : (
+                <Play size={13} />
+              )}
+              <span>{isAutoplay ? (isHovered ? 'Paused (Hover)' : 'Autoplay') : 'Autoplay'}</span>
+              
+              {/* Live Progress Countdown Fill */}
+              {isAutoplay && !isHovered && (
+                <span 
+                  className="deck-autoplay-progress-bar"
+                  style={{ width: `${autoplayProgress}%` }}
+                />
+              )}
+            </button>
+
+            {/* Speed Selector */}
+            {isAutoplay && (
+              <select
+                className="deck-speed-dropdown"
+                value={autoplaySpeed}
+                onChange={(e) => setAutoplaySpeed(Number(e.target.value))}
+                title="Autoplay transition speed"
+              >
+                <option value={2500}>2.5s</option>
+                <option value={4000}>4.0s</option>
+                <option value={6000}>6.0s</option>
+              </select>
+            )}
           </div>
 
+          {/* Perspective Tilt Slider (Available in Isometric Mode) */}
+          {deckMode === 'isometric' && (
+            <div className="deck-tilt-slider" title="Adjust 3D perspective angle">
+              <RotateCw size={12} style={{ color: 'var(--text-tertiary)' }} />
+              <input 
+                type="range" 
+                min="-35" 
+                max="25" 
+                value={rotationAngle}
+                onChange={(e) => setRotationAngle(Number(e.target.value))}
+                aria-label="3D Rotate Angle"
+              />
+              <span className="deck-tilt-deg">{rotationAngle}°</span>
+            </div>
+          )}
+
+          {/* Full Screen Mode Toggle */}
+          <button 
+            type="button"
+            className={`deck-ctrl-btn deck-fullscreen-btn ${isFullscreen ? 'active' : ''}`}
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit Fullscreen (Esc)" : "Launch Full Screen Presentation (F)"}
+            aria-label="Toggle Fullscreen"
+          >
+            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            <span>{isFullscreen ? 'Exit Full' : 'Full Screen'}</span>
+          </button>
+
           {/* Navigation Arrows */}
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
+          <div className="deck-nav-arrows">
             <button 
+              type="button"
               className="deck-ctrl-btn arrow-btn"
               onClick={handlePrev}
               title="Previous card (Left Arrow)"
@@ -195,6 +386,7 @@ export default function DeckView3D({
               <ChevronLeft size={16} />
             </button>
             <button 
+              type="button"
               className="deck-ctrl-btn arrow-btn"
               onClick={handleNext}
               title="Next card (Right Arrow)"
@@ -203,117 +395,172 @@ export default function DeckView3D({
               <ChevronRight size={16} />
             </button>
           </div>
+
         </div>
+
       </div>
 
-      {/* 3D STAGE VIEWPORT (Image 1 Isometric Perspective Stage) */}
-      <div className="deck-3d-stage">
+      {/* =========================================================
+          3D STAGE VIEWPORT
+         ========================================================= */}
+      <div 
+        className={`deck-3d-stage ${deckMode}`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         
-        {/* Atmospheric 3D Cosmic Violet Floor Grid Glow */}
+        {/* Atmospheric 3D Floor Grid Glow */}
         <div 
           className="deck-stage-ambient-glow" 
           style={{ '--active-glow': activeTheme.glowColor }}
-        ></div>
+        />
 
+        {/* 3D Perspective Stage Wrapper */}
         <div 
-          className="deck-3d-perspective-wrapper"
+          className={`deck-3d-perspective-wrapper ${deckMode}`}
           style={{
-            transform: `perspective(1400px) rotateY(${rotationAngle}deg) rotateX(10deg)`
+            transform: deckMode === 'isometric'
+              ? `perspective(1400px) rotateY(${rotationAngle}deg) rotateX(10deg)`
+              : `perspective(1200px) rotateY(0deg)`
           }}
         >
-          {cardIndices.map(({ index, depthOffset, ip }) => {
-            const isFront = depthOffset === 0;
-            const theme = getIPTheme(ip);
+          {cardIndices.map((item) => {
+            const isFront = deckMode === 'spatial' ? item.offset === 0 : item.depthOffset === 0;
+            const theme = getIPTheme(item.ip);
             const Icon = theme.icon;
-            const isCopied = copiedId === ip.id;
+            const isCopied = copiedId === item.ip.id;
 
-            // Compute 3D translation & stagger
-            // As depth increases, cards step left (-X), back (-Z), and slightly up (+Y or -Y)
-            const translateX = -depthOffset * 105; // Step to the left
-            const translateZ = -depthOffset * 135; // Step into the screen
-            const translateY = depthOffset * 6;   // Subtle stagger
-            const opacity = Math.max(0.25, 1 - depthOffset * 0.13);
-            const brightness = Math.max(0.4, 1 - depthOffset * 0.12);
+            // Geometry calculations based on Deck Mode
+            let cardTransform = '';
+            let opacity = 1;
+            let zIndex = 1;
+            let filter = 'none';
+
+            if (deckMode === 'spatial') {
+              const offset = item.offset;
+              const absOffset = Math.abs(offset);
+              
+              if (offset === 0) {
+                // Active Card: Center & Forward
+                cardTransform = `translate3d(0px, 0px, 80px) rotateY(0deg) scale(1)`;
+                zIndex = 20;
+                opacity = 1;
+                filter = 'brightness(1)';
+              } else if (offset < 0) {
+                // Left Wing Cards
+                const tx = offset * 210 - 45;
+                const tz = absOffset * -110;
+                cardTransform = `translate3d(${tx}px, 0px, ${tz}px) rotateY(32deg) scale(${1 - absOffset * 0.08})`;
+                zIndex = 20 - absOffset;
+                opacity = Math.max(0.35, 1 - absOffset * 0.22);
+                filter = `brightness(${Math.max(0.5, 1 - absOffset * 0.18)})`;
+              } else {
+                // Right Wing Cards
+                const tx = offset * 210 + 45;
+                const tz = absOffset * -110;
+                cardTransform = `translate3d(${tx}px, 0px, ${tz}px) rotateY(-32deg) scale(${1 - absOffset * 0.08})`;
+                zIndex = 20 - absOffset;
+                opacity = Math.max(0.35, 1 - absOffset * 0.22);
+                filter = `brightness(${Math.max(0.5, 1 - absOffset * 0.18)})`;
+              }
+            } else {
+              // Isometric Mode: Layered depth fan
+              const depth = item.depthOffset;
+              const translateX = (depth - 2) * -75;
+              const translateZ = depth * -125;
+              const translateY = depth * 6;
+              cardTransform = `translateX(${translateX}px) translateY(${translateY}px) translateZ(${translateZ}px)`;
+              zIndex = 10 - depth;
+              opacity = Math.max(0.28, 1 - depth * 0.14);
+              filter = `brightness(${Math.max(0.45, 1 - depth * 0.12)})`;
+            }
 
             return (
               <div
-                key={`${ip.id || index}-${depthOffset}`}
+                key={`${item.ip.id || item.index}-${deckMode}`}
                 className={`deck-fanned-card ${isFront ? 'is-front' : 'is-stacked'}`}
                 style={{
-                  transform: `translateX(${translateX}px) translateY(${translateY}px) translateZ(${translateZ}px)`,
+                  transform: cardTransform,
                   opacity: opacity,
-                  filter: `brightness(${brightness})`,
-                  zIndex: visibleCardsCount - depthOffset,
+                  filter: filter,
+                  zIndex: zIndex,
                   '--card-glow-color': theme.glowColor
+                }}
+                onMouseEnter={() => {
+                  if (isFront) setIsHovered(true);
+                }}
+                onMouseLeave={() => {
+                  if (isFront) setIsHovered(false);
                 }}
                 onClick={() => {
                   if (!isFront) {
-                    setActiveIndex(index);
+                    setActiveIndex(item.index);
+                    setAutoplayProgress(0);
                   } else {
-                    onOpenDossier(ip);
+                    onOpenDossier(item.ip);
                   }
                 }}
               >
-                {/* Ambient Under-Card Bloom (Image 2) */}
-                {isFront && <div className="inspiration-card-bottom-bloom"></div>}
+                {/* Ambient Under-Card Bloom */}
+                {isFront && <div className="inspiration-card-bottom-bloom" />}
 
                 {/* 1. UPPER HERO VIEWPORT */}
                 <div className="deck-card-hero">
                   
-                  {/* Actual Event / Activity Photography Backdrop */}
-                  {ip.image && (
-                    <div className="inspiration-hero-img-wrap">
-                      <img 
-                        src={ip.image} 
-                        alt={ip.title} 
-                        className="inspiration-hero-img"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                      <div className="inspiration-hero-overlay"></div>
-                    </div>
-                  )}
+                  {/* Event / Brand Photography Backdrop */}
+                  <div className="inspiration-hero-img-wrap">
+                    <img 
+                      src={item.ip.image || getCategoryFallbackImage(item.ip.category)} 
+                      alt={item.ip.title} 
+                      className="inspiration-hero-img"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = getCategoryFallbackImage(item.ip.category);
+                      }}
+                    />
+                    <div className="inspiration-hero-overlay" />
+                  </div>
 
                   {/* Top Badges */}
                   <div className="deck-card-top-bar">
-                    <span className="deck-id-tag">{ip.id}</span>
-                    <span className="deck-scale-tag">{(ip.category || 'Entertainment').split('/')[0].trim()}</span>
+                    <span className="deck-id-tag">{item.ip.id}</span>
+                    <span className="deck-scale-tag">{(item.ip.category || 'Entertainment').split('/')[0].trim()}</span>
                   </div>
 
-                  {/* 3D Frosted Hexagon Emblem (Image 2) */}
+                  {/* 3D Frosted Hexagon Emblem */}
                   <div className="deck-hex-container">
                     <FrostedHexagon 
                       icon={Icon} 
                       glowColor={theme.glowColor} 
                       iconColor={theme.iconColor} 
-                      size={isFront ? 76 : 60} 
+                      size={isFront ? 74 : 58} 
                     />
                   </div>
 
-                  {/* 3D Illuminated Platform & Floor Grid (Image 1) */}
+                  {/* 3D Illuminated Platform & Floor Grid */}
                   <div className="deck-neon-platform">
-                    <div className="deck-platform-grid"></div>
-                    <div className="deck-platform-core" style={{ background: theme.glowColor }}></div>
+                    <div className="deck-platform-grid" />
+                    <div className="deck-platform-core" style={{ background: theme.glowColor }} />
                   </div>
 
-                  {/* Diagonal Light Streak across Hero (Image 2) */}
-                  <div className="deck-specular-beam"></div>
+                  {/* Diagonal Light Streak across Hero */}
+                  <div className="deck-specular-beam" />
                 </div>
 
                 {/* 2. LOWER CONTENT ZONE */}
                 <div className="deck-card-body">
                   
                   <div className="deck-meta-headline">
-                    <span className="deck-category-dot" style={{ background: theme.glowColor }}></span>
-                    <span className="deck-category-text">{ip.category}</span>
+                    <span className="deck-category-dot" style={{ background: theme.glowColor }} />
+                    <span className="deck-category-text">{item.ip.category}</span>
                     {isFront && (
                       <button 
+                        type="button"
                         className="deck-corner-arrow" 
                         onClick={(e) => {
                           e.stopPropagation();
-                          onOpenDossier(ip);
+                          onOpenDossier(item.ip);
                         }}
                         title="Open full dossier specs"
                       >
@@ -322,58 +569,60 @@ export default function DeckView3D({
                     )}
                   </div>
 
-                  <h3 className="deck-card-title">{ip.title}</h3>
+                  <h3 className="deck-card-title">{item.ip.title}</h3>
 
-                  {isFront && (
+                  {isFront ? (
                     <>
                       {/* Doha Target Fit */}
                       <div className="deck-venue-badge">
-                        <MapPin size={13} style={{ color: '#fca5a5' }} />
-                        <span>{typeof ip.venue_fit === 'string' ? ip.venue_fit : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : (ip.venue_fit || ''))}</span>
+                        <MapPin size={12} style={{ color: '#fca5a5' }} />
+                        <span>{typeof item.ip.venue_fit === 'string' ? item.ip.venue_fit : (Array.isArray(item.ip.venue_fit) ? item.ip.venue_fit.join(', ') : (item.ip.venue_fit || 'DECC / QNCC'))}</span>
                       </div>
 
                       {/* Tour Benchmark */}
                       <p className="deck-benchmark-snippet">
-                        <strong>Benchmark:</strong> {ip.past_shows}
+                        <strong>Benchmark:</strong> {item.ip.past_shows || 'Global touring production across North America, Europe and Middle East.'}
                       </p>
 
-                      {/* Action Bar with White Pill Button (Image 2) */}
+                      {/* Action Bar */}
                       <div className="deck-card-actions" onClick={(e) => e.stopPropagation()}>
                         
                         <button 
+                          type="button"
                           className="apple-pill-btn-white"
-                          onClick={() => onOpenPitch(ip)}
+                          onClick={() => onOpenPitch(item.ip)}
                           title="Generate & preview pitch email"
                         >
+                          <Mail size={13} />
                           <span>Pitch Email</span>
-                          <ArrowUpRight size={14} />
+                          <ArrowUpRight size={13} />
                         </button>
 
                         <div style={{ display: 'flex', gap: '0.4rem' }}>
                           <button 
+                            type="button"
                             className="apple-arrow-btn"
-                            onClick={(e) => handleQuickCopy(e, ip)}
+                            onClick={(e) => handleQuickCopy(e, item.ip)}
                             title="Copy pitch email"
                           >
-                            {isCopied ? <Check size={15} style={{ color: 'var(--accent-emerald)' }} /> : <Copy size={14} />}
+                            {isCopied ? <Check size={14} style={{ color: 'var(--accent-emerald)' }} /> : <Copy size={13} />}
                           </button>
 
                           <button 
+                            type="button"
                             className="apple-arrow-btn"
-                            onClick={() => onOpenDossier(ip)}
+                            onClick={() => onOpenDossier(item.ip)}
                             title="Open dossier modal"
                           >
-                            <ExternalLink size={14} />
+                            <ExternalLink size={13} />
                           </button>
                         </div>
 
                       </div>
                     </>
-                  )}
-
-                  {!isFront && (
+                  ) : (
                     <div className="deck-mini-venue">
-                      <span>{typeof ip.venue_fit === 'string' ? ip.venue_fit.split(';')[0] : (Array.isArray(ip.venue_fit) ? ip.venue_fit[0] : (ip.venue_fit || ''))}</span>
+                      <span>{typeof item.ip.venue_fit === 'string' ? item.ip.venue_fit.split(';')[0] : 'Qatar Ready'}</span>
                     </div>
                   )}
 
@@ -386,7 +635,78 @@ export default function DeckView3D({
 
       </div>
 
-      {/* Quick Filmstrip Thumbnails Carousel at the bottom (3D Dock) */}
+      {/* =========================================================
+          FULLSCREEN FLOATING ACTION CONSOLE (WHEN IN FULLSCREEN)
+         ========================================================= */}
+      {isFullscreen && (
+        <div className="deck-fullscreen-hud-bottom">
+          <button 
+            type="button"
+            className="deck-hud-btn"
+            onClick={handlePrev}
+            title="Previous (Left Arrow)"
+          >
+            <ChevronLeft size={16} />
+            <span>Prev</span>
+          </button>
+
+          <button 
+            type="button"
+            className={`deck-hud-btn play-btn ${isAutoplay ? 'active' : ''}`}
+            onClick={() => setIsAutoplay(!isAutoplay)}
+            title="Toggle Autoplay (Space)"
+          >
+            {isAutoplay ? <Pause size={15} /> : <Play size={15} />}
+            <span>{isAutoplay ? 'Pause' : 'Play'}</span>
+          </button>
+
+          <button 
+            type="button"
+            className="deck-hud-btn"
+            onClick={handleNext}
+            title="Next (Right Arrow)"
+          >
+            <span>Next</span>
+            <ChevronRight size={16} />
+          </button>
+
+          <div className="deck-hud-divider" />
+
+          <button 
+            type="button"
+            className="deck-hud-btn action"
+            onClick={() => onOpenDossier(activeIP)}
+            title="Open Complete Dossier Specs"
+          >
+            <FileText size={14} />
+            <span>Full Dossier</span>
+          </button>
+
+          <button 
+            type="button"
+            className="deck-hud-btn action"
+            onClick={() => onOpenPitch(activeIP)}
+            title="Launch Pitch Studio"
+          >
+            <Send size={14} />
+            <span>Pitch Email</span>
+          </button>
+
+          <button 
+            type="button"
+            className="deck-hud-btn exit"
+            onClick={toggleFullscreen}
+            title="Exit Fullscreen (Esc)"
+          >
+            <Minimize2 size={14} />
+            <span>Exit Fullscreen</span>
+          </button>
+        </div>
+      )}
+
+      {/* =========================================================
+          QUICK FILMSTRIP THUMBNAILS CAROUSEL (3D DOCK)
+         ========================================================= */}
       <div 
         ref={filmstripRef}
         onWheel={handleTrayWheel}
@@ -399,11 +719,15 @@ export default function DeckView3D({
           const theme = getIPTheme(ip);
           return (
             <button
+              type="button"
               key={ip.id}
               className={`deck-thumb-capsule ${isCurrent ? 'active' : ''}`}
               style={{ '--thumb-glow': theme.glowColor }}
-              onClick={() => setActiveIndex(i)}
-              title={`${ip.title} (${ip.venue_fit})`}
+              onClick={() => {
+                setActiveIndex(i);
+                setAutoplayProgress(0);
+              }}
+              title={`${ip.title} (${typeof ip.venue_fit === 'string' ? ip.venue_fit : 'Qatar'})`}
             >
               <span className="thumb-id">{ip.id}</span>
               <span className="thumb-title">{ip.title}</span>
