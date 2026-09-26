@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { loadIPs, saveIPs, resetIPs, matchesCategory, isTodayLead, matchesSearch, sanitizeAndDeduplicateIPs } from './data/ips';
-import { checkAndTriggerDailyExtraction, extractBatchDailyIPs } from './services/dailyExtractionEngine';
+import { extractBatchDailyIPs, shouldTrigger8amDailyDrop, record8amDailyDropExecuted } from './services/dailyExtractionEngine';
 import { NeonDbService } from './services/neonDbService';
 import NavigationBar from './components/NavigationBar';
 import StatsOverview from './components/StatsOverview';
@@ -359,19 +359,26 @@ export default function App() {
     }
   };
 
-  // Manual trigger to extract brand-new verified unique entertainment IPs & branded events
-  const handleExtractDailyIPs = async () => {
+  // Trigger to extract brand-new verified unique entertainment IPs & branded events
+  const handleExtractDailyIPs = async (count = 10, triggerSource = null) => {
     if (isExtracting) return;
     setIsExtracting(true);
-    showToast('⚡ Connecting to Live Entertainment Intelligence Engine...');
+    const isAuto8am = triggerSource === '8am';
+    showToast(isAuto8am ? '🌅 8:00 AM Lead Drop: Ingesting 10 verified global entertainment leads...' : '⚡ Connecting to Live Entertainment Intelligence Engine...');
     try {
-      const result = await extractBatchDailyIPs(ips, 6);
+      const result = await extractBatchDailyIPs(ips, count);
       if (result.added && result.added.length > 0) {
         setIps((prev) => sanitizeAndDeduplicateIPs([...result.added, ...prev]));
         // Background async push to Neon (stateless, closes immediately)
         NeonDbService.pushIps(result.added).catch(() => {});
-        showToast(`⚡ ${result.source}: Ingested ${result.added.length} verified new IPs (0 duplicates)!`);
+        if (isAuto8am) {
+          record8amDailyDropExecuted(result.added.length);
+          showToast(`🌅 Morning 8:00 AM Lead Drop: Ingested ${result.added.length} verified new touring IPs!`);
+        } else {
+          showToast(`⚡ ${result.source}: Ingested ${result.added.length} verified new IPs (0 duplicates)!`);
+        }
       } else {
+        if (isAuto8am) record8amDailyDropExecuted(0);
         showToast(result.message || '⚡ Portfolio is fully up-to-date with all verified global tours.');
       }
     } catch (err) {
@@ -380,6 +387,22 @@ export default function App() {
       setIsExtracting(false);
     }
   };
+
+  // Automated Morning 8:00 AM Lead Drop: Checks local time and fetches 10 leads at 8:00 AM daily
+  useEffect(() => {
+    const check8amDrop = () => {
+      if (shouldTrigger8amDailyDrop() && !isExtracting) {
+        handleExtractDailyIPs(10, '8am');
+      }
+    };
+
+    // Immediate check on startup/mount
+    check8amDrop();
+
+    // Regular pulse every 30 seconds to catch 8:00 AM precisely
+    const timer = setInterval(check8amDrop, 30000);
+    return () => clearInterval(timer);
+  }, [ips, isExtracting]);
 
   // Explicit one-shot on-demand sync with Neon Serverless Postgres via Cloudflare
   const handleSyncNeon = async () => {
@@ -447,7 +470,6 @@ export default function App() {
         onOpenExtractionModal={() => setIsExtractionModalOpen(true)}
         onExportCSV={handleExportCSV}
         onExportJSON={handleExportJSON}
-        onResetData={handleResetData}
         onExtractDailyIPs={handleExtractDailyIPs}
         isExtracting={isExtracting}
         currentUser={currentUser}
@@ -601,6 +623,7 @@ export default function App() {
         onCurrentUserUpdated={(updated) => setCurrentUser(updated)}
         onShowToast={showToast}
         onOpenExtractionModal={() => setIsExtractionModalOpen(true)}
+        onResetData={handleResetData}
       />
     </>
   );

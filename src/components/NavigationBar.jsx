@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Plus, FileSpreadsheet, Code2, RotateCcw, Zap, Sparkles,
+  Plus, FileSpreadsheet, Code2, Zap, Sparkles,
   ShieldCheck, Shield, User, LogIn, LogOut, Settings, 
-  ChevronDown, KeyRound, UserCheck, Cloud, RefreshCw 
+  ChevronDown, KeyRound, UserCheck, Cloud, RefreshCw,
+  FolderDown, SlidersHorizontal, Database
 } from 'lucide-react';
 import IpHubLogo from './IpHubLogo';
 
@@ -11,7 +12,6 @@ export default function NavigationBar({
   onOpenExtractionModal,
   onExportCSV, 
   onExportJSON, 
-  onResetData, 
   onExtractDailyIPs,
   isExtracting = false,
   currentUser,
@@ -23,13 +23,18 @@ export default function NavigationBar({
   isSyncing = false
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const toolsMenuRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setIsUserMenuOpen(false);
+      }
+      if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target)) {
+        setIsToolsMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -57,43 +62,42 @@ export default function NavigationBar({
           </div>
         </div>
 
-        {/* Global Action Tools - Pure Minimal Icon Buttons */}
+        {/* Global Action Tools - Clean, Uncluttered, Purpose-Driven */}
         <div className="nav-actions-group">
           
-          {/* Automated Daily Discovery Icon Button */}
+          {/* 1. PRIMARY CTA: Fetch 10 Leads (Automated Gemini AI & Verified Pool) */}
           <button 
-            className={`nav-icon-btn amber ${isExtracting ? 'extracting-active' : ''}`}
-            onClick={onExtractDailyIPs}
+            className={`nav-fetch-btn ${isExtracting ? 'extracting-active' : ''}`}
+            onClick={() => onExtractDailyIPs && onExtractDailyIPs(10)}
             disabled={isExtracting}
-            title={isExtracting ? "Extracting & Verifying Global Leads..." : "Extract Daily Leads (+6 Verified Properties)"}
-            aria-label="Extract Daily Leads"
+            title={isExtracting ? "Extracting & Verifying 10 Global Leads..." : "Fetch 10 Verified Leads via Live AI & Global Registry"}
+            aria-label="Fetch 10 Leads"
           >
             {isExtracting ? (
-              <RefreshCw size={16} className="spin-animation" style={{ color: '#fbbf24' }} />
+              <RefreshCw size={14} className="spin-animation" style={{ color: '#fbbf24' }} />
             ) : (
-              <Zap size={16} fill="#fbbf24" color="#fbbf24" />
+              <Zap size={14} fill="#fbbf24" color="#fbbf24" />
             )}
+            <span>{isExtracting ? 'Fetching...' : 'Fetch 10 Leads'}</span>
+            <span className="nav-fetch-badge">+10</span>
           </button>
 
-          {/* Neon Cloud Sync Button */}
-          {onSyncNeon && (
-            <button 
-              className={`nav-icon-btn ${isSyncing ? 'gold' : 'cyan'}`}
-              onClick={onSyncNeon}
-              disabled={isSyncing}
-              title={isSyncing ? "Synchronizing with Neon Serverless..." : "Sync with Neon Cloud Database"}
-              aria-label="Sync with Neon Cloud Database"
-              style={{ color: isSyncing ? '#fbbf24' : '#38bdf8' }}
-            >
-              <Cloud size={16} className={isSyncing ? 'spin-hover' : ''} />
-            </button>
-          )}
+          {/* 2. Add New IP Button */}
+          <button 
+            className="nav-add-btn" 
+            onClick={onOpenAddModal}
+            title="Register New Entertainment IP Lead"
+            aria-label="Add IP Lead"
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            <span>Add IP</span>
+          </button>
 
-          {/* Live Extraction & AI Scraper Pipeline Button */}
+          {/* 3. Live AI & Sheets Pipeline Hub */}
           <button 
             className="nav-icon-btn highlight" 
             onClick={onOpenExtractionModal}
-            title="Lead Extraction Pipeline: Google Sheets (Gemini Spark) & Live Gemini Web Scraper"
+            title="Pipeline Hub: Google Sheets Sync & Live Gemini AI Web Scraper"
             aria-label="Extraction Pipeline"
             style={{ 
               background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(16, 185, 129, 0.18) 100%)',
@@ -104,55 +108,86 @@ export default function NavigationBar({
             <Sparkles size={16} />
           </button>
 
-          {/* Add IP Lead Icon Button */}
-          <button 
-            className="nav-icon-btn primary" 
-            onClick={onOpenAddModal}
-            title="Add New IP Lead"
-            aria-label="Add IP Lead"
-          >
-            <Plus size={18} strokeWidth={2.5} />
-          </button>
+          {/* 4. CONSOLIDATED TOOLS & EXPORT DROPDOWN (Replaces loose CSV, JSON, and Neon buttons) */}
+          <div style={{ position: 'relative' }} ref={toolsMenuRef}>
+            <button
+              className={`nav-icon-btn ${isToolsMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsToolsMenuOpen(!isToolsMenuOpen)}
+              title="Export portfolio and cloud database tools"
+              aria-label="Tools and Export Menu"
+            >
+              <FolderDown size={16} />
+            </button>
 
-          {/* Export CSV Icon Button */}
-          <button 
-            className="nav-icon-btn" 
-            onClick={onExportCSV}
-            title="Export full portfolio to CSV"
-            aria-label="Export CSV"
-          >
-            <FileSpreadsheet size={16} />
-          </button>
+            {isToolsMenuOpen && (
+              <div className="nav-tools-dropdown">
+                <div className="nav-tools-header">
+                  <span>Export & Cloud Tools</span>
+                </div>
 
-          {/* Export JSON Icon Button */}
-          <button 
-            className="nav-icon-btn" 
-            onClick={onExportJSON}
-            title="Export full portfolio to JSON"
-            aria-label="Export JSON"
-          >
-            <Code2 size={16} />
-          </button>
+                {/* Export CSV */}
+                <button
+                  className="nav-tools-item"
+                  onClick={() => {
+                    setIsToolsMenuOpen(false);
+                    onExportCSV();
+                  }}
+                >
+                  <FileSpreadsheet size={15} style={{ color: 'var(--accent-emerald)' }} />
+                  <div>
+                    <div style={{ fontWeight: 650, color: '#ffffff' }}>Export to CSV</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>Download full portfolio spreadsheet</div>
+                  </div>
+                </button>
 
-          {/* Reset Data Icon Button */}
-          <button 
-            className="nav-icon-btn" 
-            onClick={onResetData}
-            title="Reset dataset back to original 44 properties"
-            aria-label="Reset Data"
-          >
-            <RotateCcw size={15} />
-          </button>
+                {/* Export JSON */}
+                <button
+                  className="nav-tools-item"
+                  onClick={() => {
+                    setIsToolsMenuOpen(false);
+                    onExportJSON();
+                  }}
+                >
+                  <Code2 size={15} style={{ color: 'var(--accent-cyan)' }} />
+                  <div>
+                    <div style={{ fontWeight: 650, color: '#ffffff' }}>Export to JSON</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>Raw developer dataset format</div>
+                  </div>
+                </button>
 
-          {/* ADMIN EXCLUSIVE: Admin Panel Icon Button */}
+                {/* Neon Serverless Cloud Sync */}
+                {onSyncNeon && (
+                  <button
+                    className="nav-tools-item"
+                    onClick={() => {
+                      setIsToolsMenuOpen(false);
+                      onSyncNeon();
+                    }}
+                    disabled={isSyncing}
+                  >
+                    <Database size={15} style={{ color: isSyncing ? '#fbbf24' : '#38bdf8' }} />
+                    <div>
+                      <div style={{ fontWeight: 650, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span>Sync Neon Cloud</span>
+                        {isSyncing && <span style={{ fontSize: '0.62rem', color: '#fbbf24' }}>(Syncing...)</span>}
+                      </div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>Cloud PostgreSQL database sync</div>
+                    </div>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 5. ADMIN CONTROL PANEL BUTTON (Static, clean icon, does NOT rotate) */}
           {isAdmin && (
             <button
               className="nav-icon-btn gold"
               onClick={onOpenAdminModal}
-              title="Admin Control Panel: Manage user accounts & permissions"
+              title="Admin Control Panel: Accounts, Permissions & Factory Reset"
               aria-label="Admin Control Panel"
             >
-              <Settings size={16} className="spin-hover" />
+              <Settings size={16} />
             </button>
           )}
 

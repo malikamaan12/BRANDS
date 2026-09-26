@@ -3,8 +3,7 @@
 // ============================================================================
 
 import { normalizeSignature } from './dailyExtractionEngine.js';
-import { getCategoryFallbackImage } from '../components/CardsView.jsx';
-import { isDuplicateOf } from '../data/ips.js';
+import { getCategoryFallbackImage, isDuplicateOf } from '../data/ips.js';
 
 const SETTINGS_STORAGE_KEY = 'doha_extraction_pipeline_settings';
 
@@ -301,7 +300,7 @@ export async function runGeminiWebExtraction(apiKey, queryFocus = '', existingIP
   const existingTitles = existingIPs.slice(0, 44).map(ip => ip.title).join(', ');
 
   const systemPrompt = `You are the Chief Entertainment IP Scouting Intelligence Officer for E3 Live & Qatar Tourism in Doha, Qatar.
-Your mission is to perform live web intelligence to discover 5 to 8 REAL, currently touring or newly announced (2025-2026) global entertainment properties, arena spectacles, Broadway/West End theatricals, preschool live shows, or immersive blockbuster exhibitions.
+Your mission is to perform live web intelligence to discover 10 REAL, currently touring or newly announced (2025-2026) global entertainment properties, arena spectacles, Broadway/West End theatricals, preschool live shows, or immersive blockbuster exhibitions.
 
 DOHA VENUES TO MATCH TO:
 - Qatar National Convention Centre (QNCC) Theater (2,300 seats)
@@ -340,7 +339,7 @@ Output ONLY raw JSON. Do not include markdown codeblocks or extra text.`;
     : `Search the web for top global touring entertainment IPs, immersive exhibitions, and arena spectacles touring internationally in 2025-2026 suitable for Qatar.`;
 
   // Prioritized model fallback list for ultra-fast, high-availability generation
-  const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-lite-latest'];
+  const models = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite'];
   let responseData = null;
   let lastError = null;
 
@@ -451,6 +450,14 @@ Output ONLY raw JSON. Do not include markdown codeblocks or extra text.`;
       email_template: emailTemplate,
       notes: item.notes || 'Extracted via Gemini AI live web search.',
       image: getCategoryFallbackImage(category),
+      connection_history: [
+        {
+          id: `log-${Date.now()}-${newId}`,
+          timestamp: new Date().toISOString(),
+          action: 'Discovered & verified via Gemini AI Live Intelligence',
+          user: 'Gemini AI Engine'
+        }
+      ],
       isAiExtracted: true,
       extracted_at: new Date().toISOString()
     });

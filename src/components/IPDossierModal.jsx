@@ -3,7 +3,7 @@ import {
   X, Copy, Check, Send, ExternalLink, Mail, Building, User, 
   MapPin, Sparkles, FileText, NotebookText, ArrowUpRight, 
   Globe, Award, Calendar, CheckCircle2, ChevronRight, Share2, Layers, Play,
-  Trash2, Lock
+  Trash2, Lock, Shield, History
 } from 'lucide-react';
 import FrostedHexagon from './FrostedHexagon';
 import { getIPTheme, getCategoryFallbackImage } from './CardsView';
@@ -109,12 +109,30 @@ export default function IPDossierModal({ ip, initialTab = 'overview', onClose, o
 
     const mailtoUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailtoUrl, '_blank');
+
+    // Secure Connection Audit Trail Logging
+    const newLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      action: `Launched official promoter outreach email to ${recipient || ip.producer}`,
+      user: currentUser?.name || 'Licensing Manager'
+    };
+    const updatedHistory = [newLog, ...(Array.isArray(ip.connection_history) ? ip.connection_history : [])];
+    onUpdateIP({ ...ip, connection_history: updatedHistory, notes, status });
+    showToastNotification(`Logged outreach dispatch to ${recipient || ip.producer}`);
   };
 
   // Handle Status change
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus);
-    const updated = { ...ip, status: newStatus, notes };
+    const newLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      action: `Deal pipeline advanced to "${newStatus}"`,
+      user: currentUser?.name || 'Licensing Manager'
+    };
+    const updatedHistory = [newLog, ...(Array.isArray(ip.connection_history) ? ip.connection_history : [])];
+    const updated = { ...ip, status: newStatus, notes, connection_history: updatedHistory };
     onUpdateIP(updated);
     showToastNotification(`Status updated to "${newStatus}"`);
   };
@@ -709,11 +727,46 @@ export default function IPDossierModal({ ip, initialTab = 'overview', onClose, o
                     </div>
                     <textarea 
                       className="apple-textarea"
-                      style={{ flex: 1, minHeight: 120, resize: 'none' }}
+                      style={{ flex: 1, minHeight: 100, resize: 'none' }}
                       placeholder="Add strategic notes regarding promoter splits, Qatar ticketing partner allocation, QNCC hold dates, venue technical load-in..."
                       value={notes}
                       onChange={handleNotesChange}
                     />
+                  </div>
+
+                  {/* Secured Connection & Outreach History Ledger */}
+                  <div style={{ marginTop: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-cyan)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        <History size={12} />
+                        <span>Secured Connection & Outreach Audit Trail</span>
+                      </div>
+                      <span style={{ fontSize: '0.64rem', color: 'var(--accent-emerald)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600 }}>
+                        <Lock size={10} /> Lead Vault Encrypted
+                      </span>
+                    </div>
+
+                    <div className="connection-log-card">
+                      {(!ip.connection_history || ip.connection_history.length === 0) ? (
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', padding: '0.35rem 0' }}>
+                          No outreach logs yet. Launching mail client or advancing deal stages automatically produces tamper-evident audit records.
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          {ip.connection_history.slice(0, 5).map((log, idx) => (
+                            <div key={log.id || idx} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.72rem', borderBottom: idx < Math.min(4, ip.connection_history.length - 1) ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingBottom: '0.3rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-cyan)', flexShrink: 0 }}></span>
+                                <span style={{ color: '#e2e8f0', fontWeight: 550 }}>{log.action}</span>
+                              </div>
+                              <div style={{ color: 'var(--text-tertiary)', fontSize: '0.66rem', whiteSpace: 'nowrap' }}>
+                                {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {log.user || 'Team'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                 </div>

@@ -1112,3 +1112,24 @@ export function resetIPs() {
   localStorage.removeItem(STORAGE_KEY);
   return JSON.parse(JSON.stringify(INITIAL_IPS));
 }
+
+// Category-based rock-solid image fallbacks
+export function getCategoryFallbackImage(category = '') {
+  const cat = (category || '').toLowerCase();
+  if (cat.includes('ice')) {
+    return 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=800&q=80';
+  }
+  if (cat.includes('stunt') || cat.includes('motorsport') || cat.includes('arena')) {
+    return 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80';
+  }
+  if (cat.includes('exhibition') || cat.includes('museum') || cat.includes('jurassic')) {
+    return 'https://images.unsplash.com/photo-1570458436416-b8fcccfe883f?auto=format&fit=crop&w=800&q=80';
+  }
+  if (cat.includes('symphony') || cat.includes('concert') || cat.includes('music')) {
+    return 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80';
+  }
+  if (cat.includes('theat') || cat.includes('puppet') || cat.includes('stage') || cat.includes('musical')) {
+    return 'https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=800&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80';
+}

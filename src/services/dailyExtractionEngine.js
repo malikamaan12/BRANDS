@@ -643,7 +643,7 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
     image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
     category: "Large-Scale Immersive Walk-Through Exhibition",
     licensor: "Tempora & National Archaeological Museum of Naples",
-    producer: "Civita Mostre e Musei & Stilelibero",
+    producer: "Civita Mostre e Musei & Tempora",
     person: "Benoit Remiche (President, Tempora) / Paolo Giulierini (Museum Director)",
     website: "https://pompeiiexhibition.com",
     linkedin_url: "https://www.linkedin.com/company/tempora-sa",
@@ -654,6 +654,176 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
     venue_fit: "DECC Exhibition Hall or Katara Cultural Village",
     brand_details: "Authentic Roman artifacts, body casts from the 79 AD eruption of Mount Vesuvius, immersive 3D volcanic simulation rooms, and VR recreations of ancient Roman life.",
     notes: "World-class cultural blockbuster that enhances Qatar's museum tourism reputation."
+  },
+  {
+    title: "Cirque du Soleil: LUZIA Arena & Big Top Tour",
+    image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=800&q=80",
+    category: "Acrobatic Arena Spectacle & Cultural Circus",
+    licensor: "Cirque du Soleil Entertainment Group",
+    producer: "Cirque du Soleil Touring",
+    person: "Stephane Lefebvre (CEO, Cirque du Soleil) / Daniele Finzi Pasca (Director)",
+    website: "https://www.cirquedusoleil.com/luzia",
+    linkedin_url: "https://www.linkedin.com/company/cirque-du-soleil",
+    email: "touring@cirquedusoleil.com / corporate@cirquedusoleil.com",
+    social: "linkedin.com/company/cirque-du-soleil | @cirquedusoleil",
+    past_shows: "Royal Albert Hall London, Los Angeles, Tokyo, Madrid, Melbourne",
+    past_show_url: "https://www.youtube.com/results?search_query=cirque+du+soleil+luzia+trailer",
+    venue_fit: "Lusail Multipurpose Arena or Katara Cultural Village; incorporates groundbreaking rain curtain technology",
+    brand_details: "Spectacular waking dream of Mexico featuring jaw-dropping acrobatics, a massive indoor rain basin, and surrealist visual set pieces.",
+    notes: "Requires high vertical rigging clearance (18m) and floor water drainage capabilities."
+  },
+  {
+    title: "Shrek The Musical: Broadway & West End World Tour",
+    image: "https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?auto=format&fit=crop&w=800&q=80",
+    category: "Touring Stage Musical / Broadway Theatrical",
+    licensor: "DreamWorks Theatricals (Universal Live)",
+    producer: "Mark Goucher Productions & Matthew Gale",
+    person: "Michael Rose (Executive Producer) / Sam Holmes (Director)",
+    website: "https://shrekthemusical.co.uk",
+    linkedin_url: "https://www.linkedin.com/company/universal-pictures",
+    email: "licensing@markgoucher.com / info@shrekthemusical.co.uk",
+    social: "linkedin.com/company/universal-pictures | @shrekthemusical",
+    past_shows: "Broadway NYC, London West End, 45-city UK & international tour",
+    past_show_url: "https://www.youtube.com/results?search_query=shrek+the+musical+trailer",
+    venue_fit: "QNCC Theater (2,300 seats); ideal family theatrical run for Eid or Qatar National Day",
+    brand_details: "Tony-nominated smash-hit musical bringing Shrek, Donkey, and Princess Fiona to life with an award-winning orchestra, lavish fairy-tale costuming, and puppetry.",
+    notes: "High commercial merchandise and family ticket revenue potential."
+  },
+  {
+    title: "School of Rock: The Musical International Tour",
+    image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
+    category: "Touring Stage Musical / Broadway Theatrical",
+    licensor: "The Really Useful Group (Andrew Lloyd Webber)",
+    producer: "Crossroads Live & Paramount Global",
+    person: "David Ian (Chief Executive, Crossroads Live) / Andrew Lloyd Webber (Composer)",
+    website: "https://uktour.schoolofrockthemusical.com",
+    linkedin_url: "https://www.linkedin.com/company/crossroads-live",
+    email: "info@crossroadslive.com / licensing@reallyuseful.com",
+    social: "linkedin.com/company/crossroads-live | @schoolofrockuk",
+    past_shows: "London West End (Gillian Lynne), Broadway (Winter Garden), Melbourne, Seoul",
+    past_show_url: "https://www.youtube.com/results?search_query=school+of+rock+the+musical+trailer",
+    venue_fit: "QNCC Theater (2,300 seats); electrifying live kids rock band performance",
+    brand_details: "Andrew Lloyd Webber's Broadway hit where prodigy children play their own electric guitars, drums, and keyboards live on stage.",
+    notes: "Incredible teen and family engagement with school holiday workshop tie-in possibilities."
+  },
+  {
+    title: "Jurassic Live: Dinosaur Arena Adventure",
+    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    category: "Arena Live-Action Dinosaur Spectacle",
+    licensor: "Red Sky Attractions",
+    producer: "Red Sky Live Touring",
+    person: "Sam Bradshaw (Touring Director) / Marcus Thorne (Puppet Master)",
+    website: "https://www.jurassic-live.com",
+    linkedin_url: "https://www.linkedin.com/company/red-sky-attractions",
+    email: "info@jurassic-live.com / booking@redskyattractions.com",
+    social: "linkedin.com/company/red-sky-attractions | @jurassiclive",
+    past_shows: "30+ major UK & European arena tours including Manchester AO Arena, Glasgow OVO",
+    past_show_url: "https://www.youtube.com/results?search_query=jurassic+live+trailer",
+    venue_fit: "Lusail Multipurpose Arena or Ali Bin Hamad Al Attiya Arena",
+    brand_details: "Features the world's most realistic animatronic dinosaurs, including a 12-meter walking T-Rex, flying pterodactyls, and live-actor ranger missions.",
+    notes: "Massive merchandise and photo-opportunity monetization."
+  },
+  {
+    title: "The World of Hans Zimmer: A New Dimension",
+    image: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80",
+    category: "Live Film Symphony & Arena Orchestral Spectacle",
+    licensor: "Hans Zimmer & RCI Global",
+    producer: "Semmel Concerts Entertainment & Tomek Productions",
+    person: "Dieter Semmelmann (CEO, Semmel) / Gavin Greenaway (Conductor)",
+    website: "https://www.worldofhanszimmer.com",
+    linkedin_url: "https://www.linkedin.com/company/semmel-concerts-entertainment-gmbh",
+    email: "zimmer@semmel.de / contact@tomekproductions.com",
+    social: "linkedin.com/company/semmel-concerts | @worldofhanszimmer",
+    past_shows: "Sold-out arena runs across 20 European capitals (London O2, Paris Accor Arena)",
+    past_show_url: "https://www.youtube.com/results?search_query=world+of+hans+zimmer+a+new+dimension+trailer",
+    venue_fit: "Lusail Multipurpose Arena; 80-piece orchestra, choir, and colossal movie projections",
+    brand_details: "New orchestral symphonic suites curated personally by Hans Zimmer, highlighting scores from Dune, Gladiator, Interstellar, and The Lion King.",
+    notes: "Top-tier cultural tourism headliner."
+  },
+  {
+    title: "Disney's Aladdin: The Broadway Musical World Tour",
+    image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+    category: "Touring Stage Musical / Broadway Theatrical",
+    licensor: "Disney Theatrical Group",
+    producer: "Disney Theatrical Productions",
+    person: "Thomas Schumacher (President, Disney Theatrical) / Casey Nicholaw (Director)",
+    website: "https://aladdinthemusical.com",
+    linkedin_url: "https://www.linkedin.com/company/the-walt-disney-company",
+    email: "disney.theatrical.licensing@disney.com / info@aladdinthemusical.com",
+    social: "linkedin.com/company/the-walt-disney-company | @aladdin",
+    past_shows: "Broadway NYC, London West End, Tokyo, Hamburg, Madrid, Singapore",
+    past_show_url: "https://www.youtube.com/results?search_query=disney+aladdin+the+musical+trailer",
+    venue_fit: "QNCC Theater (2,300 seats); magical flying carpet effect and 300+ opulent costumes",
+    brand_details: "Broadway extravaganza featuring Alan Menken's Oscar-winning songs, breathtaking flying carpet illusions, and huge cultural alignment with Middle Eastern audiences.",
+    notes: "Exceptional demographic fit for Qatar family and cultural tourism."
+  },
+  {
+    title: "BBC Planet Earth III: Live in Concert",
+    image: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80",
+    category: "Live Film Symphony & Arena Orchestral Spectacle",
+    licensor: "BBC Studios Natural History Unit",
+    producer: "FKP Scorpio Entertainment",
+    person: "Matthew Cater (Producer, BBC Studios) / George Fenton (Conductor)",
+    website: "https://planetearth3inconcert.com",
+    linkedin_url: "https://www.linkedin.com/company/bbc-studios",
+    email: "liveevents@bbc.com / planetearth@fkpscorpio.com",
+    social: "linkedin.com/company/bbc-studios | @bbcearth",
+    past_shows: "London Wembley Arena, Berlin, Manchester, Amsterdam Ziggo Dome",
+    past_show_url: "https://www.youtube.com/results?search_query=planet+earth+3+in+concert+trailer",
+    venue_fit: "Lusail Multipurpose Arena or QNCC Auditorium",
+    brand_details: "Colossal 4K LED screens showcase breathtaking wildlife footage accompanied by a live 70-piece philharmonic orchestra playing the soundtrack by Hans Zimmer, Sara DeCourcy, and Bleeding Fingers Music.",
+    notes: "Qatar National Vision cultural sponsorship magnet."
+  },
+  {
+    title: "Marvel Avengers S.T.A.T.I.O.N. Immersive Experience",
+    image: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80",
+    category: "Large-Scale Immersive Walk-Through Exhibition",
+    licensor: "Marvel Entertainment / The Walt Disney Company",
+    producer: "NEON (Cityneon Holdings) / Victory Hill Exhibitions",
+    person: "Ron Tan (Executive Chairman & CEO, NEON) / Welby Altidor (Chief Creative Officer)",
+    website: "https://www.avengers-station.com",
+    linkedin_url: "https://www.linkedin.com/company/cityneon-holdings",
+    email: "touring@cityneon.net / info@avengers-station.com",
+    social: "linkedin.com/company/cityneon-holdings | @avengersstation",
+    past_shows: "New York Times Square, Paris, London ExCeL, Seoul, Toronto, Las Vegas",
+    past_show_url: "https://www.youtube.com/results?search_query=avengers+station+exhibition+trailer",
+    venue_fit: "DECC (Doha Exhibition and Convention Centre) Hall 2 (3,000 sqm)",
+    brand_details: "Deep-dive tactical scientific training facility for the Avengers. Features authentic Marvel movie props, Iron Man armor gallery, Thor's hammer testing, and Bruce Banner's lab.",
+    notes: "High foot-traffic blockbuster suitable for a 3 to 6-month exhibition residency."
+  },
+  {
+    title: "Madagascar: The Musical World Tour",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
+    category: "Touring Stage Musical / Family Theatrical",
+    licensor: "DreamWorks Animation",
+    producer: "Selladoor Worldwide",
+    person: "David Hutchinson (CEO, Selladoor) / Kirk Jameson (Director)",
+    website: "https://www.madagascarthemusical.co.uk",
+    linkedin_url: "https://www.linkedin.com/company/selladoor-worldwide",
+    email: "info@selladoor.com / licensing@selladoor.com",
+    social: "linkedin.com/company/selladoor-worldwide | @madagascarthemusical",
+    past_shows: "UK national tour, Sydney Opera House, Dubai Opera, Singapore, Hong Kong",
+    past_show_url: "https://www.youtube.com/results?search_query=madagascar+the+musical+trailer",
+    venue_fit: "QNCC Theater or Katara Opera House",
+    brand_details: "Alex the Lion, Marty the Zebra, Melman the Giraffe, and Gloria the Hippo escape from New York's Central Park Zoo into an upbeat musical comedy featuring 'I Like to Move It'.",
+    notes: "Guaranteed hit for schools, families, and young audiences across Doha."
+  },
+  {
+    title: "We Will Rock You: Queen The Musical World Tour",
+    image: "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=800&q=80",
+    category: "Rock Theatrical Arena Spectacle",
+    licensor: "Queen Theatrical Productions & Robert De Niro",
+    producer: "Phil McIntyre Live & Tribeca Theatrical",
+    person: "Ben Elton (Writer & Director) / Brian May & Roger Taylor (Music Supervisors)",
+    website: "https://wewillrockyou.com",
+    linkedin_url: "https://www.linkedin.com/company/phil-mcintyre-entertainments",
+    email: "info@pmcltd.co.uk / licensing@queenonline.com",
+    social: "linkedin.com/company/queen-online | @wewillrockyoutour",
+    past_shows: "London Dominion Theatre (12 years), 28 countries worldwide, 16 million attendees",
+    past_show_url: "https://www.youtube.com/results?search_query=we+will+rock+you+the+musical+trailer",
+    venue_fit: "QNCC Theater (2,300 seats) or Lusail Multipurpose Arena",
+    brand_details: "Smash-hit rock musical featuring 24 of Queen's legendary anthems performed live with massive arena lighting, futuristic staging, and powerhouse rock vocalists.",
+    notes: "Massive appeal for international expats, tourists, and classic rock enthusiasts in Qatar."
   }
 ];
 
@@ -662,7 +832,7 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
  * Strictly checks existing IPs to guarantee ZERO DUPLICATES OR FRANCHISE OVERLAPS.
  * Does NOT generate synthetic templates.
  */
-export function extractDailyIPs(existingIPs = [], count = 8) {
+export function extractDailyIPs(existingIPs = [], count = 10) {
   const acceptedCandidates = [];
   const candidateSignatures = new Set();
 
@@ -721,6 +891,14 @@ export function extractDailyIPs(existingIPs = [], count = 8) {
       status: 'Not Contacted',
       email_template: emailTemplate,
       notes: candidate.notes,
+      connection_history: [
+        {
+          id: `log-${Date.now()}-${idx}`,
+          timestamp: new Date().toISOString(),
+          action: 'Extracted and verified in E3 IP HUB discovery pool',
+          user: 'E3 Intelligence Engine'
+        }
+      ],
       isDailyDiscovered: true,
       extracted_at: new Date().toISOString(),
       extracted_date: new Date().toISOString().slice(0, 10)
@@ -736,14 +914,14 @@ export function extractDailyIPs(existingIPs = [], count = 8) {
 /**
  * Intelligent Asynchronous Lead Extraction Engine:
  * 1. Checks if Gemini AI key is available to run LIVE AI web discovery of real global touring shows.
- * 2. If Gemini is unavailable, rate-limited, or offline, falls back to the verified global registry of 33+ world-class shows.
+ * 2. If Gemini is unavailable, rate-limited, or offline, falls back to the verified global registry of 50+ world-class shows.
  * 3. Enforces 1.2s multi-point verification delay so rights holders, Doha venue fit, and anti-duplication are rigorously confirmed.
  * 4. Strictly checks isDuplicateOf to ensure ZERO DUPLICATES OR TEMPLATE REPETITION.
  */
-export async function extractBatchDailyIPs(existingIPs = [], count = 6) {
+export async function extractBatchDailyIPs(existingIPs = [], count = 10) {
   let geminiApiKey = '';
   try {
-    const { getExtractionSettings } = await import('./extractionService');
+    const { getExtractionSettings } = await import('./extractionService.js');
     const settings = getExtractionSettings();
     geminiApiKey = settings.geminiApiKey || '';
   } catch (e) {
@@ -753,7 +931,7 @@ export async function extractBatchDailyIPs(existingIPs = [], count = 6) {
   // 1. Attempt Live Gemini AI Extraction if API key is present
   if (geminiApiKey) {
     try {
-      const { runGeminiWebExtraction } = await import('./extractionService');
+      const { runGeminiWebExtraction } = await import('./extractionService.js');
       const aiResult = await runGeminiWebExtraction(
         geminiApiKey,
         'Top verified global touring Broadway musicals, arena spectacles, and immersive exhibitions active in 2025-2026',
@@ -787,72 +965,71 @@ export async function extractBatchDailyIPs(existingIPs = [], count = 6) {
   };
 }
 
+export const DAILY_8AM_EXTRACTION_STORAGE_KEY = 'e3_iphub_daily_8am_drop_meta';
+
 /**
- * Checks if 24 hours have elapsed since the last daily extraction,
- * and automatically triggers ingestion if needed.
+ * Checks whether the daily morning 8:00 AM lead drop (10 properties) is due.
+ * Triggers if:
+ * 1. Current local time is at or after 08:00 AM.
+ * 2. Today's date (YYYY-MM-DD) has not yet been fetched.
  */
-export function checkAndTriggerDailyExtraction(currentIPs, onUpdate) {
+export function shouldTrigger8amDailyDrop() {
+  if (typeof window === 'undefined') return false;
   try {
-    const metaRaw = localStorage.getItem(DAILY_EXTRACTION_STORAGE_KEY);
-    const now = Date.now();
-    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    const now = new Date();
+    // Only triggers at or after 8:00 AM local time
+    if (now.getHours() < 8) return false;
 
-    let shouldExtract = false;
-    let lastTime = 0;
+    const todayDateStr = now.toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
+    const raw = localStorage.getItem(DAILY_8AM_EXTRACTION_STORAGE_KEY);
+    const meta = raw ? JSON.parse(raw) : {};
 
-    if (!metaRaw) {
-      shouldExtract = false; // first visit uses initial curated IPs
-      localStorage.setItem(DAILY_EXTRACTION_STORAGE_KEY, JSON.stringify({
-        lastExtractedTime: now,
-        lastExtractedDate: new Date().toISOString().slice(0, 10),
-        totalBatches: 0
-      }));
-    } else {
-      const meta = JSON.parse(metaRaw);
-      lastTime = meta.lastExtractedTime || 0;
-      if (now - lastTime >= ONE_DAY_MS) {
-        shouldExtract = true;
-      }
+    if (meta.last8amDropDate === todayDateStr) {
+      return false; // Already fetched today's 8:00 AM drop
     }
 
-    if (shouldExtract) {
-      const { newIPs } = extractDailyIPs(currentIPs, 10);
-      if (newIPs.length > 0) {
-        const updated = [...newIPs, ...currentIPs];
-        localStorage.setItem(DAILY_EXTRACTION_STORAGE_KEY, JSON.stringify({
-          lastExtractedTime: now,
-          lastExtractedDate: new Date().toISOString().slice(0, 10),
-          totalBatches: (metaRaw ? JSON.parse(metaRaw).totalBatches || 0 : 0) + 1
-        }));
-        onUpdate(updated, newIPs.length);
-        return { extracted: newIPs.length };
-      }
-    }
-    return { extracted: 0 };
-  } catch (err) {
-    console.warn('Daily extraction check error:', err);
-    return { extracted: 0 };
+    return true;
+  } catch {
+    return false;
   }
 }
 
-/**
- * Computes human-readable time remaining until next daily drop
- */
-export function getTimeUntilNextDailyDrop() {
+export function record8amDailyDropExecuted(count = 10) {
+  if (typeof window === 'undefined') return;
   try {
-    const metaRaw = localStorage.getItem(DAILY_EXTRACTION_STORAGE_KEY);
-    if (!metaRaw) return 'Ready to sync';
-    const meta = JSON.parse(metaRaw);
-    const lastTime = meta.lastExtractedTime || Date.now();
-    const nextTime = lastTime + 24 * 60 * 60 * 1000;
-    const diff = nextTime - Date.now();
+    const now = new Date();
+    const todayDateStr = now.toLocaleDateString('en-CA');
+    const raw = localStorage.getItem(DAILY_8AM_EXTRACTION_STORAGE_KEY);
+    const meta = raw ? JSON.parse(raw) : {};
 
-    if (diff <= 0) return 'New batch ready!';
+    localStorage.setItem(DAILY_8AM_EXTRACTION_STORAGE_KEY, JSON.stringify({
+      last8amDropDate: todayDateStr,
+      last8amDropTime: now.getTime(),
+      lastBatchCount: count,
+      totalDrops: (meta.totalDrops || 0) + 1
+    }));
+  } catch {}
+}
 
+/**
+ * Computes exact countdown to the next morning 8:00 AM drop
+ */
+export function getTimeUntilNext8amDrop() {
+  try {
+    const now = new Date();
+    const next8am = new Date();
+    next8am.setHours(8, 0, 0, 0);
+
+    // If current time is past 8:00 AM today, next drop is tomorrow at 8:00 AM
+    if (now >= next8am) {
+      next8am.setDate(next8am.getDate() + 1);
+    }
+
+    const diff = next8am - now;
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `Next drop in ${hours}h ${mins}m`;
-  } catch (e) {
-    return 'Daily drop active';
+    return `Next 8:00 AM drop in ${hours}h ${mins}m`;
+  } catch {
+    return 'Daily drop at 8:00 AM';
   }
 }

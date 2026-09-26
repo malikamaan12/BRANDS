@@ -14,7 +14,8 @@ export default function AdminPanelModal({
   currentUser, 
   onCurrentUserUpdated, 
   onShowToast, 
-  onOpenExtractionModal 
+  onOpenExtractionModal,
+  onResetData
 }) {
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'create' | 'matrix'
@@ -716,6 +717,54 @@ export default function AdminPanelModal({
                   <div style={{ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                     <Shield size={13} style={{ color: 'var(--accent-emerald)' }} />
                     <span>Role Enforcement: Normal users can perform all operational tasks, but card deletion is strictly restricted to Admins. All user changes sync automatically to Neon PostgreSQL.</span>
+                  </div>
+
+                  {/* ADMIN DANGER ZONE: FACTORY PORTFOLIO RESET */}
+                  <div style={{
+                    marginTop: '1.4rem',
+                    padding: '1.1rem 1.3rem',
+                    background: 'rgba(239, 68, 68, 0.05)',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    flexWrap: 'wrap'
+                  }}>
+                    <div style={{ flex: 1, minWidth: '240px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#f87171', fontWeight: 800, fontSize: '0.82rem' }}>
+                        <ShieldAlert size={15} />
+                        <span>Danger Zone: Factory Portfolio Reset</span>
+                      </div>
+                      <p style={{ margin: '4px 0 0', fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                        Reset live portfolio back to the baseline 44 verified entertainment properties. (Only Master Admins can execute this).
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('CAUTION: Are you sure you want to reset the portfolio back to the 44 baseline properties? Any custom added leads will be removed.')) {
+                          onClose();
+                          onResetData && onResetData();
+                        }
+                      }}
+                      className="apple-btn"
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.16)',
+                        border: '1px solid rgba(239, 68, 68, 0.45)',
+                        color: '#f87171',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        padding: '0.5rem 1rem',
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <RotateCcw size={13} />
+                      <span>Reset to 44 Properties</span>
+                    </button>
                   </div>
                 </div>
               )}
