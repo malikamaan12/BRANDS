@@ -598,6 +598,7 @@ export default function App() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         currentUser={currentUser}
+        onCurrentUserUpdated={(updated) => setCurrentUser(updated)}
         onShowToast={showToast}
         onOpenExtractionModal={() => setIsExtractionModalOpen(true)}
       />

@@ -8,7 +8,14 @@ import {
 import { authService } from '../services/authService';
 import IpHubLogo from './IpHubLogo';
 
-export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowToast, onOpenExtractionModal }) {
+export default function AdminPanelModal({ 
+  isOpen, 
+  onClose, 
+  currentUser, 
+  onCurrentUserUpdated, 
+  onShowToast, 
+  onOpenExtractionModal 
+}) {
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'create' | 'matrix'
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,6 +35,8 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
   const [editName, setEditName] = useState('');
   const [editTitle, setEditTitle] = useState('');
   const [editRole, setEditRole] = useState('user');
+  const [editPassword, setEditPassword] = useState('');
+  const [showEditPass, setShowEditPass] = useState(false);
 
   // Password reset state
   const [resettingUser, setResettingUser] = useState(null);
@@ -156,6 +165,8 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
     setEditName(user.name);
     setEditTitle(user.title || '');
     setEditRole(user.role);
+    setEditPassword('');
+    setShowEditPass(false);
   };
 
   const handleSaveEdit = async (e) => {
@@ -170,12 +181,16 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
     const res = await authService.updateUser(editingUser.id, {
       name: editName,
       title: editTitle,
-      role: editRole
+      role: editRole,
+      password: editPassword.trim() || undefined
     });
 
     if (res.success) {
+      if (onCurrentUserUpdated && (editingUser.id === currentUser?.id || editingUser.email.toLowerCase() === currentUser?.email.toLowerCase())) {
+        onCurrentUserUpdated(res.user);
+      }
       loadUsersList();
-      onShowToast(`Updated user details for ${editName}`);
+      onShowToast(`Updated details for ${editName} (${editRole === 'admin' ? '👑 Admin' : '👤 Normal User'})`);
       setEditingUser(null);
     } else {
       alert(res.error || 'Failed to update user.');
@@ -199,6 +214,9 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
 
     const res = await authService.updateUserPassword(resettingUser.id, newResetPassword.trim());
     if (res.success) {
+      if (onCurrentUserUpdated && (resettingUser.id === currentUser?.id || resettingUser.email.toLowerCase() === currentUser?.email.toLowerCase())) {
+        onCurrentUserUpdated(res.user || { ...currentUser });
+      }
       loadUsersList();
       onShowToast(`Reset password for ${resettingUser.name}`);
       setResettingUser(null);
@@ -1098,7 +1116,7 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>Role</label>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>Role & Access Level</label>
                   <select
                     value={editRole}
                     disabled={editingUser.isRoot}
@@ -1115,9 +1133,52 @@ export default function AdminPanelModal({ isOpen, onClose, currentUser, onShowTo
                       boxSizing: 'border-box'
                     }}
                   >
-                    <option value="user">👤 Normal User (No Card Deletion)</option>
-                    <option value="admin">👑 Administrator (Full Control & Deletions)</option>
+                    <option value="user">👤 Normal User (Operational Access, No Card Deletion)</option>
+                    <option value="admin">👑 Administrator (Full Control, Card Deletion & Admin Panel)</option>
                   </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    New Password (Optional — leave blank to keep current)
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showEditPass ? 'text' : 'password'}
+                      placeholder="Leave blank to keep existing password"
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 2.4rem 0.65rem 0.85rem',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#ffffff',
+                        fontSize: '0.84rem',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEditPass(!showEditPass)}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-tertiary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {showEditPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>

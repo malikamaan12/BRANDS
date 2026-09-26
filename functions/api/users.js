@@ -145,6 +145,7 @@ export async function onRequestPost(context) {
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
           email = EXCLUDED.email,
+          password = CASE WHEN EXCLUDED.password IS NOT NULL AND EXCLUDED.password != '' THEN EXCLUDED.password ELSE iphub_users.password END,
           role = EXCLUDED.role,
           title = EXCLUDED.title,
           is_active = EXCLUDED.is_active,

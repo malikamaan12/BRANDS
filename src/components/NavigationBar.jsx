@@ -197,6 +197,11 @@ export default function NavigationBar({
                       <div className="nav-dropdown-email">
                         {currentUser.email}
                       </div>
+                      {currentUser.title && (
+                        <div style={{ fontSize: '0.69rem', color: '#fbbf24', marginTop: '2px', fontWeight: 600 }}>
+                          {currentUser.title}
+                        </div>
+                      )}
                     </div>
                   </div>
 

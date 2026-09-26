@@ -149,7 +149,7 @@ class AuthService {
     }
   }
 
-  // Fetch users from Neon PostgreSQL with local password preservation
+  // Fetch users from Neon PostgreSQL with local customization preservation
   async syncUsersFromRemote() {
     try {
       const res = await fetch('/api/users', {
@@ -166,18 +166,31 @@ class AuthService {
             );
             return {
               id: u.id,
-              name: u.name,
+              name: existing?.isLocallyModified ? existing.name : (u.name || existing?.name),
               email: u.email,
-              // Preserve local password if remote doesn't provide it
               password: existing?.password || 'E3qatech@123!',
-              role: u.role,
-              title: u.title,
-              isRoot: Boolean(u.is_root),
-              isActive: u.is_active !== false,
-              createdAt: u.created_at
+              role: existing?.isLocallyModified ? existing.role : (u.role || existing?.role || 'user'),
+              title: existing?.isLocallyModified ? existing.title : (u.title || existing?.title || ''),
+              isRoot: Boolean(u.is_root || existing?.isRoot),
+              isActive: existing?.isActive !== undefined ? existing.isActive : (u.is_active !== false),
+              createdAt: u.created_at || existing?.createdAt,
+              isLocallyModified: Boolean(existing?.isLocallyModified),
+              updatedAt: existing?.updatedAt || u.updated_at
             };
           });
           this.saveUsers(formatted);
+
+          // If the current logged-in user exists in the fresh list, refresh active session
+          const activeSession = this.getCurrentUser();
+          if (activeSession) {
+            const refreshed = formatted.find(u => u.id === activeSession.id || u.email.toLowerCase() === activeSession.email.toLowerCase());
+            if (refreshed) {
+              const sanitized = { ...refreshed };
+              delete sanitized.password;
+              this.setCurrentUser(sanitized);
+            }
+          }
+
           return formatted;
         }
       }
@@ -394,15 +407,27 @@ class AuthService {
       name: updates.name ? updates.name.trim() : target.name,
       role: updates.role ? (updates.role === 'admin' ? 'admin' : 'user') : target.role,
       title: updates.title !== undefined ? updates.title.trim() : target.title,
-      isActive: updates.isActive !== undefined ? Boolean(updates.isActive) : target.isActive
+      password: (updates.password && updates.password.trim().length >= 6) ? updates.password.trim() : target.password,
+      isActive: updates.isActive !== undefined ? Boolean(updates.isActive) : target.isActive,
+      isLocallyModified: true,
+      updatedAt: new Date().toISOString()
     };
 
     users[index] = updatedUser;
     this.saveUsers(users);
 
-    // Push to Neon
+    const sanitized = { ...updatedUser };
+    delete sanitized.password;
+
+    // Immediately synchronize active session if this is the currently logged-in user
+    const currentSession = this.getCurrentUser();
+    if (currentSession && (currentSession.id === userId || currentSession.email.toLowerCase() === target.email.toLowerCase())) {
+      this.setCurrentUser(sanitized);
+    }
+
+    // Push to Neon via Cloudflare API
     try {
-      fetch('/api/users', {
+      await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -418,11 +443,11 @@ class AuthService {
             is_active: updatedUser.isActive !== false
           }
         })
-      }).catch(() => {});
-    } catch {}
+      });
+    } catch (e) {
+      // Local fallback active
+    }
 
-    const sanitized = { ...updatedUser };
-    delete sanitized.password;
     return { success: true, user: sanitized };
   }
 
@@ -469,7 +494,18 @@ class AuthService {
     }
 
     users[index].password = newPassword.trim();
+    users[index].isLocallyModified = true;
+    users[index].updatedAt = new Date().toISOString();
     this.saveUsers(users);
+
+    const sanitized = { ...users[index] };
+    delete sanitized.password;
+
+    // Immediately synchronize active session if this is the currently logged-in user
+    const currentSession = this.getCurrentUser();
+    if (currentSession && (currentSession.id === userId || currentSession.email.toLowerCase() === users[index].email.toLowerCase())) {
+      this.setCurrentUser(sanitized);
+    }
 
     // Push password update to Neon
     try {
@@ -484,7 +520,7 @@ class AuthService {
       });
     } catch {}
 
-    return { success: true };
+    return { success: true, user: sanitized };
   }
 
   // RBAC Permission Checkers
