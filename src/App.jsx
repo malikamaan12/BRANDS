@@ -267,13 +267,17 @@ export default function App() {
   };
 
   // Update a single IP (persists locally and remotely to Neon)
-  const handleUpdateIP = (updatedIP) => {
+  const handleUpdateIP = async (updatedIP) => {
     setIps((prev) => prev.map((item) => (item.id === updatedIP.id ? updatedIP : item)));
     if (selectedIP && selectedIP.id === updatedIP.id) {
       setSelectedIP(updatedIP);
     }
-    // Background push to Neon
-    NeonDbService.upsertIps(updatedIP).catch(() => {});
+    // Synchronize to Neon DB & localStorage so all team members immediately see remarks and follow-ups
+    try {
+      await NeonDbService.upsertIps([updatedIP]);
+    } catch (e) {
+      console.warn('Neon sync deferred:', e);
+    }
   };
 
   // Quick advance pipeline stage for Kanban

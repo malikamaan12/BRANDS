@@ -3,9 +3,19 @@ import {
   X, Copy, Check, Send, ExternalLink, Mail, Building, User, 
   MapPin, Sparkles, FileText, NotebookText, ArrowUpRight, 
   Globe, Award, Calendar, CheckCircle2, ChevronRight, Layers, Play,
-  Trash2, Lock, Shield, History, Share2
+  Trash2, Lock, Shield, History, Share2, MessageSquare, Clock, Plus, Users,
+  CheckCircle, AlertCircle, Bookmark, Tag
 } from 'lucide-react';
 import { getCategoryFallbackImage } from './CardsView';
+
+const REMARK_CATEGORIES = [
+  { label: 'Outreach Follow-up', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' },
+  { label: 'Call / Meeting Note', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.12)' },
+  { label: 'Venue Technical Fit', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' },
+  { label: 'Commercial & Royalty Terms', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
+  { label: 'Qatar Ministry / Tourism Liaison', color: '#ec4899', bg: 'rgba(236, 72, 153, 0.12)' },
+  { label: 'General Remark', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.12)' }
+];
 
 export default function IPDossierModal({ 
   ip, 
@@ -25,6 +35,18 @@ export default function IPDossierModal({
   const [notes, setNotes] = useState(ip?.notes || '');
   const [status, setStatus] = useState(ip?.status || 'Not Contacted');
 
+  // Collaborative Team Remarks & Follow-up State
+  const getInitialRemarks = () => {
+    if (Array.isArray(ip?.team_remarks)) return ip.team_remarks;
+    if (Array.isArray(ip?.brand_details?.team_remarks)) return ip.brand_details.team_remarks;
+    return [];
+  };
+
+  const [teamRemarks, setTeamRemarks] = useState(getInitialRemarks);
+  const [newRemarkText, setNewRemarkText] = useState('');
+  const [newRemarkCategory, setNewRemarkCategory] = useState('Outreach Follow-up');
+  const [newRemarkDueDate, setNewRemarkDueDate] = useState('');
+
   const isAdmin = currentUser?.role === 'admin';
 
   const handleDeleteProperty = () => {
@@ -43,6 +65,11 @@ export default function IPDossierModal({
     if (ip) {
       setNotes(ip.notes || '');
       setStatus(ip.status || 'Not Contacted');
+      setTeamRemarks(
+        Array.isArray(ip.team_remarks)
+          ? ip.team_remarks
+          : (Array.isArray(ip.brand_details?.team_remarks) ? ip.brand_details.team_remarks : [])
+      );
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab');
       if (tabParam && ['overview', 'pitch', 'notes'].includes(tabParam)) {
@@ -158,6 +185,136 @@ export default function IPDossierModal({
     setNotes(newNotes);
     onUpdateIP?.({ ...ip, notes: newNotes, status });
     onShowToast?.(`Added note: "${tag}"`);
+  };
+
+  const handleAddTeamRemark = (e) => {
+    e?.preventDefault();
+    if (!newRemarkText.trim()) {
+      onShowToast?.('Please write a note or follow-up detail');
+      return;
+    }
+
+    const newRemark = {
+      id: `rem-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      text: newRemarkText.trim(),
+      category: newRemarkCategory,
+      dueDate: newRemarkDueDate || null,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      author: currentUser?.name || 'Team Member',
+      authorRole: currentUser?.role || 'team',
+      authorEmail: currentUser?.email || ''
+    };
+
+    const updatedRemarks = [newRemark, ...teamRemarks];
+    setTeamRemarks(updatedRemarks);
+    setNewRemarkText('');
+    setNewRemarkDueDate('');
+
+    const newLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      action: `Logged team remark: "${newRemarkCategory}" by ${currentUser?.name || 'Team Member'}`,
+      user: currentUser?.name || 'Team Member'
+    };
+    const updatedHistory = [newLog, ...(Array.isArray(ip.connection_history) ? ip.connection_history : [])];
+
+    const brandObj = typeof ip.brand_details === 'object' && ip.brand_details !== null
+      ? { ...ip.brand_details, team_remarks: updatedRemarks }
+      : { text: typeof ip.brand_details === 'string' ? ip.brand_details : '', team_remarks: updatedRemarks };
+
+    const updatedIP = {
+      ...ip,
+      team_remarks: updatedRemarks,
+      brand_details: brandObj,
+      connection_history: updatedHistory,
+      notes,
+      status
+    };
+
+    onUpdateIP?.(updatedIP);
+    onShowToast?.('Team remark saved — visible to all team members');
+  };
+
+  const handleToggleRemarkStatus = (remarkId) => {
+    const target = teamRemarks.find(r => r.id === remarkId);
+    if (!target) return;
+
+    const nextStatus = target.status === 'completed' ? 'pending' : 'completed';
+    const updatedRemarks = teamRemarks.map(r => r.id === remarkId ? { ...r, status: nextStatus } : r);
+    setTeamRemarks(updatedRemarks);
+
+    const brandObj = typeof ip.brand_details === 'object' && ip.brand_details !== null
+      ? { ...ip.brand_details, team_remarks: updatedRemarks }
+      : { text: typeof ip.brand_details === 'string' ? ip.brand_details : '', team_remarks: updatedRemarks };
+
+    const newLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      action: `Marked "${target.category}" follow-up as ${nextStatus}`,
+      user: currentUser?.name || 'Team Member'
+    };
+    const updatedHistory = [newLog, ...(Array.isArray(ip.connection_history) ? ip.connection_history : [])];
+
+    const updatedIP = {
+      ...ip,
+      team_remarks: updatedRemarks,
+      brand_details: brandObj,
+      connection_history: updatedHistory,
+      notes,
+      status
+    };
+
+    onUpdateIP?.(updatedIP);
+    onShowToast?.(`Follow-up marked as ${nextStatus}`);
+  };
+
+  const handleDeleteRemark = (remarkId) => {
+    const remarkToDelete = teamRemarks.find(r => r.id === remarkId);
+    const canDelete = isAdmin || (currentUser?.name && remarkToDelete?.author === currentUser.name);
+    if (!canDelete) {
+      onShowToast?.('🔒 You can only delete remarks created by yourself.');
+      return;
+    }
+
+    const updatedRemarks = teamRemarks.filter(r => r.id !== remarkId);
+    setTeamRemarks(updatedRemarks);
+
+    const brandObj = typeof ip.brand_details === 'object' && ip.brand_details !== null
+      ? { ...ip.brand_details, team_remarks: updatedRemarks }
+      : { text: typeof ip.brand_details === 'string' ? ip.brand_details : '', team_remarks: updatedRemarks };
+
+    const updatedIP = {
+      ...ip,
+      team_remarks: updatedRemarks,
+      brand_details: brandObj,
+      notes,
+      status
+    };
+
+    onUpdateIP?.(updatedIP);
+    onShowToast?.('Remark deleted');
+  };
+
+  const formatRemarkTime = (isoString) => {
+    if (!isoString) return '';
+    try {
+      const date = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return '';
+    }
   };
 
   const dealStages = [
@@ -435,8 +592,11 @@ export default function IPDossierModal({
                 className={`dossier-tab-btn ${activeTab === 'notes' ? 'active' : ''}`}
                 onClick={() => setActiveTab('notes')}
               >
-                <NotebookText size={14} />
-                <span>Deal & Notes</span>
+                <MessageSquare size={14} />
+                <span>Team Remarks & Notes</span>
+                {teamRemarks.length > 0 && (
+                  <span className="dossier-tab-count-badge">{teamRemarks.length}</span>
+                )}
               </button>
             </div>
 
@@ -553,15 +713,74 @@ export default function IPDossierModal({
                       <span className="dossier-card-title">Commercial Positioning & Doha Audience Fit</span>
                       <Sparkles size={13} style={{ color: '#38bdf8' }} />
                     </div>
-                    {ip.brand_details && (
+                    {(typeof ip.brand_details === 'string' ? ip.brand_details : (ip.brand_details?.text || '')) ? (
                       <p className="dossier-strategy-text">
                         <strong style={{ color: '#ffffff' }}>Franchise Reach: </strong>
-                        {ip.brand_details}
+                        {typeof ip.brand_details === 'string' ? ip.brand_details : (ip.brand_details?.text || '')}
                       </p>
-                    )}
+                    ) : null}
                     <p className="dossier-strategy-text sub">
                       {ip.notes || 'Turnkey co-production opportunity with full local technical staging in Qatar, ideal for school holidays, Eid family activations, or Qatar Tourism calendar.'}
                     </p>
+                  </div>
+
+                  {/* Section 4: Collaborative Team Activity Teaser */}
+                  <div 
+                    className="dossier-card dossier-team-teaser-card"
+                    onClick={() => setActiveTab('notes')}
+                    role="button"
+                    tabIndex={0}
+                    title="Click to view full team remarks and follow-ups"
+                  >
+                    <div className="dossier-card-header">
+                      <div className="dossier-team-teaser-title">
+                        <Users size={13} style={{ color: '#38bdf8' }} />
+                        <span className="dossier-card-title">Collaborative Team Intelligence</span>
+                        {teamRemarks.length > 0 && (
+                          <span className="dossier-team-count-chip">{teamRemarks.length}</span>
+                        )}
+                      </div>
+                      <span className="dossier-teaser-link">
+                        <span>{teamRemarks.length > 0 ? 'Open Team Feed' : '+ Add Remark'}</span>
+                        <ChevronRight size={12} />
+                      </span>
+                    </div>
+
+                    {teamRemarks.length > 0 ? (
+                      <div className="dossier-teaser-body">
+                        <div className="dossier-teaser-row">
+                          <span 
+                            className="dossier-remark-cat-badge"
+                            style={{
+                              color: REMARK_CATEGORIES.find(c => c.label === teamRemarks[0].category)?.color || '#38bdf8',
+                              background: REMARK_CATEGORIES.find(c => c.label === teamRemarks[0].category)?.bg || 'rgba(56, 189, 248, 0.12)'
+                            }}
+                          >
+                            {teamRemarks[0].category}
+                          </span>
+                          <span className="dossier-teaser-text">"{teamRemarks[0].text}"</span>
+                        </div>
+                        <div className="dossier-teaser-meta">
+                          <span>By <strong>{teamRemarks[0].author}</strong></span>
+                          <span>•</span>
+                          <span>{formatRemarkTime(teamRemarks[0].createdAt)}</span>
+                          {teamRemarks[0].dueDate && (
+                            <>
+                              <span>•</span>
+                              <span style={{ color: teamRemarks[0].status === 'completed' ? '#10b981' : '#f59e0b' }}>
+                                <Calendar size={10} style={{ display: 'inline', marginRight: 3 }} />
+                                Target: {teamRemarks[0].dueDate}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="dossier-teaser-empty">
+                        <MessageSquare size={13} style={{ color: '#64748b' }} />
+                        <span>No team remarks yet. Click here to post follow-up details and notes visible to all team members.</span>
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -619,11 +838,196 @@ export default function IPDossierModal({
                 </div>
               )}
 
-              {/* TAB 3: DEAL & NOTES */}
+              {/* TAB 3: TEAM REMARKS, FOLLOW-UPS & DEAL */}
               {activeTab === 'notes' && (
                 <div className="dossier-deal-flow">
                   
-                  {/* Pipeline Stepper */}
+                  {/* Section 1: Team Remarks & Follow-up Log (COLLABORATIVE) */}
+                  <div className="dossier-card dossier-team-collab-section">
+                    <div className="dossier-card-header">
+                      <div className="dossier-team-header-title">
+                        <Users size={14} style={{ color: '#38bdf8' }} />
+                        <span className="dossier-card-title">Collaborative Team Remarks & Follow-ups</span>
+                      </div>
+                      <div className="dossier-team-header-badges">
+                        <span className="dossier-team-count-chip">
+                          {teamRemarks.length} {teamRemarks.length === 1 ? 'Remark' : 'Remarks'}
+                        </span>
+                        {teamRemarks.filter(r => r.status !== 'completed').length > 0 && (
+                          <span className="dossier-team-pending-chip">
+                            {teamRemarks.filter(r => r.status !== 'completed').length} Pending
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Compose Remark Form */}
+                    <form className="dossier-remark-composer" onSubmit={handleAddTeamRemark}>
+                      <div className="dossier-composer-controls">
+                        {/* Category Selector */}
+                        <div className="dossier-composer-field">
+                          <label className="dossier-composer-label">Category / Nature of Note</label>
+                          <select 
+                            className="dossier-composer-select"
+                            value={newRemarkCategory}
+                            onChange={(e) => setNewRemarkCategory(e.target.value)}
+                          >
+                            {REMARK_CATEGORIES.map(cat => (
+                              <option key={cat.label} value={cat.label}>
+                                {cat.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Due Date Input */}
+                        <div className="dossier-composer-field">
+                          <label className="dossier-composer-label">Target Follow-up Date (Optional)</label>
+                          <div className="dossier-composer-date-wrap">
+                            <input 
+                              type="date"
+                              className="dossier-composer-date-input"
+                              value={newRemarkDueDate}
+                              onChange={(e) => setNewRemarkDueDate(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Text Input */}
+                      <textarea
+                        className="dossier-composer-textarea"
+                        placeholder="Write a remark, meeting note, or followup details for other team members..."
+                        value={newRemarkText}
+                        onChange={(e) => setNewRemarkText(e.target.value)}
+                        rows={2}
+                      />
+
+                      {/* Submit Bar */}
+                      <div className="dossier-composer-footer">
+                        <span className="dossier-composer-author-hint">
+                          Posting as <strong>{currentUser?.name || 'Team Member'}</strong> ({isAdmin ? '👑 Master Admin' : '👤 Team Member'}) · <em>Syncs across all devices</em>
+                        </span>
+                        <button 
+                          type="submit"
+                          className="dossier-remark-submit-btn"
+                          disabled={!newRemarkText.trim()}
+                        >
+                          <Plus size={13} />
+                          <span>Post Team Remark</span>
+                        </button>
+                      </div>
+                    </form>
+
+                    {/* Team Remarks Feed */}
+                    <div className="dossier-remarks-feed">
+                      {teamRemarks.length === 0 ? (
+                        <div className="dossier-remarks-empty">
+                          <MessageSquare size={18} style={{ color: '#64748b', marginBottom: '0.35rem' }} />
+                          <p className="dossier-remarks-empty-title">No remarks recorded yet</p>
+                          <p className="dossier-remarks-empty-desc">
+                            All team members can see notes, meetings, and follow-ups posted here.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="dossier-remarks-list">
+                          {teamRemarks.map((remark) => {
+                            const catConfig = REMARK_CATEGORIES.find(c => c.label === remark.category) || {
+                              color: '#94a3b8',
+                              bg: 'rgba(148, 163, 184, 0.12)'
+                            };
+                            const isCompleted = remark.status === 'completed';
+                            const isAuthor = currentUser?.name && remark.author === currentUser.name;
+                            const canDelete = isAdmin || isAuthor;
+
+                            return (
+                              <div 
+                                key={remark.id} 
+                                className={`dossier-remark-card ${isCompleted ? 'completed' : ''}`}
+                              >
+                                {/* Remark Card Header */}
+                                <div className="dossier-remark-card-header">
+                                  <div className="dossier-remark-author-info">
+                                    <span className="dossier-remark-author-avatar">
+                                      {(remark.author || 'T').charAt(0).toUpperCase()}
+                                    </span>
+                                    <span className="dossier-remark-author-name">
+                                      {isAuthor ? 'You' : remark.author}
+                                    </span>
+                                    <span className={`dossier-remark-role-tag ${remark.authorRole === 'admin' ? 'admin' : ''}`}>
+                                      {remark.authorRole === 'admin' ? '👑 Admin' : '👤 Team'}
+                                    </span>
+                                  </div>
+
+                                  <div className="dossier-remark-meta-right">
+                                    <span 
+                                      className="dossier-remark-cat-badge"
+                                      style={{ color: catConfig.color, background: catConfig.bg }}
+                                    >
+                                      {remark.category}
+                                    </span>
+                                    <span className="dossier-remark-time">
+                                      {formatRemarkTime(remark.createdAt)}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Remark Card Body */}
+                                <div className="dossier-remark-card-body">
+                                  <p className="dossier-remark-text">{remark.text}</p>
+                                </div>
+
+                                {/* Remark Card Footer */}
+                                <div className="dossier-remark-card-footer">
+                                  <div className="dossier-remark-footer-left">
+                                    {remark.dueDate && (
+                                      <span className={`dossier-remark-due-chip ${isCompleted ? 'done' : ''}`}>
+                                        <Calendar size={11} />
+                                        <span>Target: {remark.dueDate}</span>
+                                      </span>
+                                    )}
+
+                                    {/* Status Toggle Button */}
+                                    <button 
+                                      type="button"
+                                      className={`dossier-remark-status-toggle ${isCompleted ? 'completed' : 'pending'}`}
+                                      onClick={() => handleToggleRemarkStatus(remark.id)}
+                                      title={isCompleted ? 'Click to reopen as pending' : 'Click to mark completed'}
+                                    >
+                                      {isCompleted ? (
+                                        <>
+                                          <CheckCircle2 size={12} style={{ color: '#10b981' }} />
+                                          <span>Resolved</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Clock size={12} style={{ color: '#f59e0b' }} />
+                                          <span>Pending Follow-up</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+
+                                  {canDelete && (
+                                    <button 
+                                      type="button"
+                                      className="dossier-remark-delete-btn"
+                                      onClick={() => handleDeleteRemark(remark.id)}
+                                      title="Delete remark"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Section 2: Pipeline Stepper */}
                   <div className="dossier-card">
                     <span className="dossier-field-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
                       Host Partnership Deal Pipeline Stage

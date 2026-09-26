@@ -3136,6 +3136,498 @@ body::after {
   white-space: nowrap;
 }
 
+/* =================================================================
+   COLLABORATIVE TEAM REMARKS & FOLLOW-UP LOG STYLES
+   ================================================================= */
+.dossier-tab-count-badge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  line-height: 1;
+}
+
+.dossier-tab-btn.active .dossier-tab-count-badge {
+  background: #38bdf8;
+  color: #030712;
+  border-color: transparent;
+}
+
+/* Tab 1 Overview Teaser Card */
+.dossier-team-teaser-card {
+  cursor: pointer;
+  background: rgba(56, 189, 248, 0.03) !important;
+  border: 1px solid rgba(56, 189, 248, 0.16) !important;
+  transition: all 160ms ease;
+}
+
+.dossier-team-teaser-card:hover {
+  background: rgba(56, 189, 248, 0.06) !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+.dossier-team-teaser-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dossier-team-teaser-title .dossier-team-count-chip {
+  margin-left: 0.2rem;
+}
+
+.dossier-teaser-link {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+.dossier-teaser-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dossier-teaser-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.dossier-teaser-text {
+  font-size: 0.8rem;
+  color: #e2e8f0;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dossier-teaser-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.dossier-teaser-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  padding: 0.2rem 0;
+}
+
+/* Tab 3 Collaboration Section */
+.dossier-team-collab-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.4);
+}
+
+.dossier-team-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dossier-team-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dossier-team-count-chip {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+.dossier-team-pending-chip {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+/* Composer */
+.dossier-remark-composer {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.dossier-composer-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.dossier-composer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dossier-composer-label {
+  font-size: 0.67rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.dossier-composer-select,
+.dossier-composer-date-input {
+  background: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.76rem;
+  color: #ffffff;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 140ms ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dossier-composer-select:focus,
+.dossier-composer-date-input:focus {
+  border-color: #38bdf8;
+}
+
+.dossier-composer-select option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.dossier-composer-textarea {
+  width: 100%;
+  min-height: 60px;
+  background: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #ffffff;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  line-height: 1.45;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 140ms ease;
+}
+
+.dossier-composer-textarea:focus {
+  border-color: #38bdf8;
+}
+
+.dossier-composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dossier-composer-author-hint {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.dossier-composer-author-hint strong {
+  color: #94a3b8;
+}
+
+.dossier-composer-author-hint em {
+  font-style: normal;
+  color: #38bdf8;
+}
+
+.dossier-remark-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #38bdf8;
+  color: #030712;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.38rem 0.8rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 140ms ease;
+  flex-shrink: 0;
+}
+
+.dossier-remark-submit-btn:hover:not(:disabled) {
+  background: #7dd3fc;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.dossier-remark-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Feed */
+.dossier-remarks-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dossier-remarks-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.1rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.dossier-remarks-empty-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin: 0 0 0.15rem 0;
+}
+
+.dossier-remarks-empty-desc {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.dossier-remarks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.dossier-remark-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  transition: all 140ms ease;
+}
+
+.dossier-remark-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dossier-remark-card.completed {
+  border-left: 3px solid #10b981;
+  background: rgba(16, 185, 129, 0.02);
+}
+
+.dossier-remark-card:not(.completed) {
+  border-left: 3px solid #f59e0b;
+}
+
+.dossier-remark-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dossier-remark-author-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dossier-remark-author-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dossier-remark-author-name {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: #f1f5f9;
+}
+
+.dossier-remark-role-tag {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+}
+
+.dossier-remark-role-tag.admin {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.dossier-remark-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dossier-remark-cat-badge {
+  font-size: 0.67rem;
+  font-weight: 650;
+  padding: 0.12rem 0.48rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.dossier-remark-time {
+  font-size: 0.68rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.dossier-remark-card-body {
+  font-size: 0.8rem;
+  color: #e2e8f0;
+  line-height: 1.45;
+}
+
+.dossier-remark-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dossier-remark-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dossier-remark-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.dossier-remark-due-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #f59e0b;
+}
+
+.dossier-remark-due-chip.done {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.dossier-remark-status-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  transition: all 140ms ease;
+}
+
+.dossier-remark-status-toggle.pending {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #f59e0b;
+}
+
+.dossier-remark-status-toggle.pending:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.dossier-remark-status-toggle.completed {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+
+.dossier-remark-status-toggle.completed:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.dossier-remark-delete-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 140ms ease;
+}
+
+.dossier-remark-delete-btn:hover {
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.1);
+}
+
 @media (max-width: 900px) {
   .dossier-modal-window {
     height: 94vh;

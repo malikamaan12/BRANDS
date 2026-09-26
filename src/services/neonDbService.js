@@ -37,9 +37,16 @@ export const NeonDbService = {
               ? item.venue_fit
               : (Array.isArray(item.venue_fit) ? item.venue_fit.join(', ') : (item.venue_fit ? JSON.stringify(item.venue_fit) : ''));
 
+            const teamRemarks = Array.isArray(item.team_remarks)
+              ? item.team_remarks
+              : (Array.isArray(item.brand_details?.team_remarks)
+                ? item.brand_details.team_remarks
+                : (Array.isArray(fallback.team_remarks) ? fallback.team_remarks : []));
+
             return {
               ...fallback,
               ...item,
+              team_remarks: teamRemarks,
               status: (!item.status || item.status === 'Prospect') ? (fallback.status || 'Not Contacted') : item.status,
               venue_fit: venueFitStr || fallback.venue_fit || '',
               email_template: item.email_template || fallback.email_template || `Subject: Host Partnership Inquiry: ${item.title} in Doha\n\nDear ${item.producer || item.licensor} Team,\n\nWe are writing to explore hosting ${item.title} in Doha, Qatar. Best regards,`
@@ -109,10 +116,23 @@ export const NeonDbService = {
 
     // Push to Neon via Cloudflare /api/ips
     try {
+      const prepared = items.map(item => {
+        const brandObj = typeof item.brand_details === 'object' && item.brand_details !== null
+          ? { ...item.brand_details }
+          : { text: typeof item.brand_details === 'string' ? item.brand_details : '' };
+        if (Array.isArray(item.team_remarks)) {
+          brandObj.team_remarks = item.team_remarks;
+        }
+        return {
+          ...item,
+          brand_details: brandObj
+        };
+      });
+
       const response = await fetch('/api/ips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(items)
+        body: JSON.stringify(prepared)
       });
 
       if (response.ok) {
