@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { loadIPs, saveIPs, resetIPs, matchesCategory, isTodayLead } from './data/ips';
+import { loadIPs, saveIPs, resetIPs, matchesCategory, isTodayLead, matchesSearch, sanitizeAndDeduplicateIPs } from './data/ips';
 import { checkAndTriggerDailyExtraction, extractBatchDailyIPs } from './services/dailyExtractionEngine';
 import { NeonDbService } from './services/neonDbService';
 import NavigationBar from './components/NavigationBar';
@@ -49,7 +49,7 @@ export default function App() {
     let isMounted = true;
     NeonDbService.getIps(ips).then((result) => {
       if (isMounted && result?.ips?.length) {
-        setIps(result.ips);
+        setIps(sanitizeAndDeduplicateIPs(result.ips));
       }
     }).catch(() => {});
     return () => { isMounted = false; };
@@ -139,10 +139,10 @@ export default function App() {
     }, 2800);
   };
 
-  // Automated 24-hour daily extraction check on mount (ensuring at least 10 daily with zero duplicates)
+  // Automated 24-hour daily extraction check on mount (ensuring zero duplicates)
   useEffect(() => {
     const res = checkAndTriggerDailyExtraction(ips, (newlyExtracted) => {
-      setIps((prev) => [...prev, ...newlyExtracted]);
+      setIps((prev) => sanitizeAndDeduplicateIPs([...prev, ...newlyExtracted]));
       NeonDbService.upsertIps(newlyExtracted).catch(() => {});
     });
     if (res?.extracted > 0) {
@@ -157,7 +157,7 @@ export default function App() {
       syncFromGoogleSheet(settings.googleSheetUrl, ips)
         .then((res) => {
           if (res?.newIPs?.length > 0) {
-            setIps((prev) => [...res.newIPs, ...prev]);
+            setIps((prev) => sanitizeAndDeduplicateIPs([...res.newIPs, ...prev]));
             NeonDbService.pushIps(res.newIPs).catch(() => {});
             showToast(`📊 Google Sheet Auto-Sync: Ingested ${res.newIPs.length} new properties!`);
           }
@@ -168,51 +168,56 @@ export default function App() {
     }
   }, []);
 
-  // Filtered IPs calculation with complete null-safety
-  const filteredIPs = useMemo(() => {
-    return ips.filter((ip) => {
-      const title = (ip.title || '').toLowerCase();
-      const licensor = (ip.licensor || '').toLowerCase();
-      const producer = (ip.producer || '').toLowerCase();
-      const category = (ip.category || '').toLowerCase();
-      const id = (ip.id || '').toLowerCase();
-      const venueFitStr = typeof ip.venue_fit === 'string'
-        ? ip.venue_fit
-        : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : '');
-      const venueLower = venueFitStr.toLowerCase();
+  // Global search matches across entire catalog (regardless of category/venue filters)
+  const globalSearchMatches = useMemo(() => {
+    if (!searchQuery || !searchQuery.trim()) return [];
+    return ips.filter((ip) => matchesSearch(ip, searchQuery));
+  }, [ips, searchQuery]);
 
-      // 1. Search filter
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const match =
-          title.includes(q) ||
-          licensor.includes(q) ||
-          producer.includes(q) ||
-          category.includes(q) ||
-          venueLower.includes(q) ||
-          id.includes(q);
-        if (!match) return false;
+  // Reset all filters and search query helper
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setFilterCategory('all');
+    setFilterVenue('all');
+    setFilterStatus('all');
+    setFilterLeadType('all');
+  };
+
+  // Filtered IPs calculation with multi-word search, accent insensitivity, and smart category fallback
+  const { filteredIPs, isGlobalSearchFallback } = useMemo(() => {
+    const hasSearch = Boolean(searchQuery && searchQuery.trim());
+    const hasCategoryFilter = filterCategory !== 'all' && filterCategory !== 'today';
+    const hasVenueFilter = filterVenue !== 'all';
+    const hasStatusFilter = filterStatus !== 'all';
+    const hasLeadTypeFilter = filterLeadType !== 'all' || filterCategory === 'today';
+
+    const strictMatches = ips.filter((ip) => {
+      // 1. Multi-token comprehensive search filter
+      if (hasSearch && !matchesSearch(ip, searchQuery)) {
+        return false;
       }
 
       // 2. Today's Lead / Origin filter
       const isToday = isTodayLead(ip);
-
       if (filterLeadType === 'today' || filterCategory === 'today') {
         if (!isToday) return false;
       } else if (filterLeadType === 'core') {
         if (isToday) return false;
       }
 
-      // 3. Category filter (standardized across entire app)
-      if (filterCategory !== 'all' && filterCategory !== 'today') {
+      // 3. Category filter
+      if (hasCategoryFilter) {
         if (!matchesCategory(ip.category, filterCategory)) {
           return false;
         }
       }
 
       // 4. Venue filter
-      if (filterVenue !== 'all') {
-        const ven = venueLower;
+      if (hasVenueFilter) {
+        const venueFitStr = typeof ip.venue_fit === 'string'
+          ? ip.venue_fit
+          : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : '');
+        const ven = venueFitStr.toLowerCase();
         if (filterVenue === 'qncc' && !ven.includes('qncc')) return false;
         if (filterVenue === 'decc' && !ven.includes('decc')) return false;
         if (filterVenue === 'lusail' && !(ven.includes('lusail') || ven.includes('abha'))) return false;
@@ -222,7 +227,7 @@ export default function App() {
       }
 
       // 5. Status filter
-      if (filterStatus !== 'all') {
+      if (hasStatusFilter) {
         const currentStatus = ip.status || 'Not Contacted';
         if (filterStatus === 'active') {
           if (currentStatus === 'Not Contacted') return false;
@@ -233,7 +238,21 @@ export default function App() {
 
       return true;
     });
-  }, [ips, searchQuery, filterCategory, filterVenue, filterStatus, filterLeadType]);
+
+    // Intelligent Fallback: If 0 strict matches were found because of active category/venue filters,
+    // but the search query matches properties elsewhere in the portfolio, show the global results!
+    const isFallback = Boolean(
+      strictMatches.length === 0 &&
+      hasSearch &&
+      (hasCategoryFilter || hasVenueFilter || hasStatusFilter || hasLeadTypeFilter) &&
+      globalSearchMatches.length > 0
+    );
+
+    return {
+      filteredIPs: isFallback ? globalSearchMatches : strictMatches,
+      isGlobalSearchFallback: isFallback
+    };
+  }, [ips, searchQuery, filterCategory, filterVenue, filterStatus, filterLeadType, globalSearchMatches]);
 
   // Open dossier modal to overview tab
   const handleOpenDossier = (ip) => {
@@ -461,6 +480,8 @@ export default function App() {
         onExtractDailyIPs={handleExtractDailyIPs}
         filteredCount={filteredIPs.length}
         totalCount={ips.length}
+        isGlobalSearchFallback={isGlobalSearchFallback}
+        onResetFilters={handleResetFilters}
       />
 
       <main className="main-view-container">
@@ -477,6 +498,7 @@ export default function App() {
             onShowToast={showToast}
             currentUser={currentUser}
             onDeleteIP={handleDeleteIP}
+            onResetFilters={handleResetFilters}
           />
         )}
 
@@ -491,6 +513,7 @@ export default function App() {
               showToast(`Status updated to "${newStatus}"`);
             }}
             onShowToast={showToast}
+            onResetFilters={handleResetFilters}
           />
         )}
 
@@ -502,6 +525,7 @@ export default function App() {
             currentUser={currentUser}
             onDeleteIP={handleDeleteIP}
             onShowToast={showToast}
+            onResetFilters={handleResetFilters}
           />
         )}
 
@@ -510,14 +534,17 @@ export default function App() {
             ips={filteredIPs}
             onOpenDossier={handleOpenDossier}
             onAdvanceStatus={handleAdvanceStatus}
+            onResetFilters={handleResetFilters}
           />
         )}
 
         {viewMode === 'venues' && (
           <VenuesMatrix
             ips={filteredIPs}
+            totalCount={ips.length}
             onOpenDossier={handleOpenDossier}
             onOpenPitch={handleOpenPitch}
+            onResetFilters={handleResetFilters}
           />
         )}
       </main>

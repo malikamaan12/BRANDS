@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Building, Sparkles, Mail } from 'lucide-react';
+import { MapPin, Building, Sparkles, Mail, RotateCcw } from 'lucide-react';
 
 const VENUE_CLUSTERS = [
   {
@@ -46,16 +46,49 @@ const VENUE_CLUSTERS = [
   }
 ];
 
-export default function VenuesMatrix({ ips, onOpenDossier, onOpenPitch }) {
+export default function VenuesMatrix({ ips, totalCount = 44, onOpenDossier, onOpenPitch, onResetFilters }) {
+  if (ips.length === 0) {
+    return (
+      <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', fontWeight: 700 }}>No entertainment properties found</p>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '0.84rem', marginTop: '0.4rem', maxWidth: 460 }}>
+          No properties matched your current search and venue filters. Try adjusting your query or resetting all filters.
+        </p>
+        {onResetFilters && (
+          <button 
+            className="apple-btn apple-btn-primary" 
+            style={{ marginTop: '1.25rem', padding: '0.55rem 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+            onClick={onResetFilters}
+            type="button"
+          >
+            <RotateCcw size={13} />
+            <span>Reset All Filters & Search</span>
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  const clustersWithMatches = VENUE_CLUSTERS.map((cluster) => {
+    const matchedIPs = ips.filter((ip) => {
+      const venueStr = typeof ip.venue_fit === 'string'
+        ? ip.venue_fit
+        : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : (ip.venue_fit ? String(ip.venue_fit) : ''));
+      return cluster.matcher(venueStr.toLowerCase());
+    });
+    return { ...cluster, matchedIPs };
+  });
+
+  const isFiltered = ips.length < totalCount;
+  // If search or filter is active, rank venues with matches first
+  const displayClusters = isFiltered
+    ? [...clustersWithMatches].sort((a, b) => b.matchedIPs.length - a.matchedIPs.length)
+    : clustersWithMatches;
+
   return (
     <div className="venues-grid">
-      {VENUE_CLUSTERS.map((cluster) => {
-        const matchedIPs = ips.filter((ip) => {
-          const venueStr = typeof ip.venue_fit === 'string'
-            ? ip.venue_fit
-            : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(', ') : (ip.venue_fit ? String(ip.venue_fit) : ''));
-          return cluster.matcher(venueStr.toLowerCase());
-        });
+      {displayClusters.map((cluster) => {
+        const matchedIPs = cluster.matchedIPs;
 
         return (
           <div key={cluster.id} className="glass-panel venue-card">

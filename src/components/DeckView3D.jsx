@@ -13,7 +13,8 @@ import {
   MapPin,
   Calendar,
   Layers,
-  RotateCw
+  RotateCw,
+  RotateCcw
 } from 'lucide-react';
 import FrostedHexagon from './FrostedHexagon';
 import { getIPTheme } from './CardsView';
@@ -34,7 +35,8 @@ export default function DeckView3D({
   onOpenDossier, 
   onOpenPitch, 
   onUpdateStatus, 
-  onShowToast 
+  onShowToast,
+  onResetFilters
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAutoplay, setIsAutoplay] = useState(false);
@@ -113,9 +115,22 @@ export default function DeckView3D({
 
   if (ips.length === 0) {
     return (
-      <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+      <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', fontWeight: 700 }}>No entertainment properties found</p>
-        <p style={{ color: 'var(--text-tertiary)', fontSize: '0.84rem', marginTop: '0.4rem' }}>Try resetting your category chips, venue filters, or search terms.</p>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '0.84rem', marginTop: '0.4rem', maxWidth: 460 }}>
+          No properties matched your current search and filters. Try adjusting your query or resetting all filters.
+        </p>
+        {onResetFilters && (
+          <button 
+            className="apple-btn apple-btn-primary" 
+            style={{ marginTop: '1.25rem', padding: '0.55rem 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+            onClick={onResetFilters}
+            type="button"
+          >
+            <RotateCcw size={13} />
+            <span>Reset All Filters & Search</span>
+          </button>
+        )}
       </div>
     );
   }

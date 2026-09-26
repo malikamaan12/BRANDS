@@ -1,13 +1,27 @@
 import React from 'react';
-import { ExternalLink, Mail, Trash2, Lock } from 'lucide-react';
+import { ExternalLink, Mail, Trash2, Lock, RotateCcw } from 'lucide-react';
 
-export default function TableView({ ips, onOpenDossier, onOpenPitch, currentUser, onDeleteIP, onShowToast }) {
+export default function TableView({ ips, onOpenDossier, onOpenPitch, currentUser, onDeleteIP, onShowToast, onResetFilters }) {
   const isAdmin = currentUser?.role === 'admin';
 
   if (ips.length === 0) {
     return (
-      <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>No entertainment properties match your filters</p>
+      <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', fontWeight: 700 }}>No entertainment properties found</p>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '0.84rem', marginTop: '0.4rem', maxWidth: 460 }}>
+          No properties matched your current search and filters. Try adjusting your query or resetting all filters.
+        </p>
+        {onResetFilters && (
+          <button 
+            className="apple-btn apple-btn-primary" 
+            style={{ marginTop: '1.25rem', padding: '0.55rem 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+            onClick={onResetFilters}
+            type="button"
+          >
+            <RotateCcw size={13} />
+            <span>Reset All Filters & Search</span>
+          </button>
+        )}
       </div>
     );
   }

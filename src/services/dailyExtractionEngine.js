@@ -1,41 +1,14 @@
-// ============================================================================
-// AUTOMATED DAILY IP EXTRACTION & INGESTION ENGINE
-// Guarantees:
-// 1. Extracts AT LEAST 10 fresh, high-value branded entertainment IPs daily
-// 2. Strict fingerprint deduplication: NOTHING IS EVER REPEATED
-// 3. Complete brand details, authentic production images, and past show footage links
-// 4. One-click website and LinkedIn access, plus Doha venue recommendations
-// ============================================================================
+import { isDuplicateOf, getFranchiseKey, normalizeSearchText } from '../data/ips';
 
 export const DAILY_EXTRACTION_STORAGE_KEY = 'doha_ip_daily_extraction_meta';
 
 // Helper to normalize strings for robust deduplication
 export function normalizeSignature(str = '') {
-  return (str || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '')
-    .trim();
+  return normalizeSearchText(str).replace(/\s+/g, '');
 }
 
-// Master pool of verified, non-duplicate global entertainment touring IPs
+// Master pool of verified, non-duplicate global entertainment touring IPs (100% unique from INITIAL_IPS)
 export const GLOBAL_IP_DISCOVERY_POOL = [
-  {
-    title: "Disney On Ice: Into the Magic",
-    image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
-    category: "Arena Ice Spectacle / Disney Family",
-    licensor: "The Walt Disney Company",
-    producer: "Feld Entertainment",
-    person: "Kenneth Feld (Chairman & CEO) / Juliette Feld Grossman (COO)",
-    website: "https://www.disneyonice.com",
-    linkedin_url: "https://www.linkedin.com/company/feld-entertainment",
-    email: "touring@feldinc.com / international@feldinc.com",
-    social: "linkedin.com/company/feld-entertainment | @disneyonice",
-    past_shows: "London O2 Arena, Allphones Arena Sydney, Tokyo Yoyogi, 75 US arenas annually",
-    past_show_url: "https://www.youtube.com/results?search_query=disney+on+ice+into+the+magic+live+footage",
-    venue_fit: "Lusail Multipurpose Arena or Ali Bin Hamad Al Attiya Arena (ABHA Arena)",
-    brand_details: "World's #1 touring family ice show with over 30M global attendees across 75 countries. Features Moana, Frozen, Beauty and the Beast, and Cinderella with world-class figure skating and aerial acrobatics.",
-    notes: "Requires arena with ice plant capability or synthetic / temporary ice floor installation."
-  },
   {
     title: "Stranger Things: The Experience",
     image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
@@ -69,57 +42,6 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
     venue_fit: "DECC Doha or Lusail International Circuit Pavilion during Qatar Grand Prix",
     brand_details: "Groundbreaking official motorsport exhibition featuring Romain Grosjean's burned chassis, historic championship-winning cars, driving simulators, and unreleased archival telemetry audio.",
     notes: "Direct synergy with Qatar Grand Prix and Lusail Circuit motorsport calendar."
-  },
-  {
-    title: "PAW Patrol Live!: Race to the Rescue",
-    image: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80",
-    category: "Touring Stage Musical / Preschool Live Show",
-    licensor: "Spin Master Entertainment & Paramount",
-    producer: "VStar Entertainment Group",
-    person: "Rachel Vogan (Tour Director) / Laura Clunie (SVP, Spin Master)",
-    website: "https://www.pawpatrollive.com",
-    linkedin_url: "https://www.linkedin.com/company/vstar-entertainment-group",
-    email: "booking@vstarentertainment.com / info@vstarentertainment.com",
-    social: "linkedin.com/company/vstar-entertainment-group | @pawpatrollive",
-    past_shows: "Over 4.5M attendees in 40+ countries, Wembley Arena, Madison Square Garden, Sydney",
-    past_show_url: "https://www.youtube.com/results?search_query=paw+patrol+live+race+to+the+rescue+trailer",
-    venue_fit: "QNCC Theater (2,300 seats); ideal 4-day weekend family engagement",
-    brand_details: "World's leading preschool animated brand with $8B+ lifetime retail sales. Features Broadway-style musical score, Bunraku-style puppetry, and high-energy interactive LED video walls.",
-    notes: "Unmatched preschool family demand across Doha, Saudi Arabia, and UAE."
-  },
-  {
-    title: "Monster Jam World Tour",
-    image: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80",
-    category: "Arena Motorsport & Stunt Entertainment",
-    licensor: "Feld Motor Sports",
-    producer: "Feld Entertainment",
-    person: "Bill Easterly (VP of Operations, Feld Motor Sports) / Kenneth Feld (CEO)",
-    website: "https://www.monsterjam.com",
-    linkedin_url: "https://www.linkedin.com/company/feld-entertainment",
-    email: "motorsports@feldinc.com / booking@feldinc.com",
-    social: "linkedin.com/company/feld-entertainment | @monsterjam",
-    past_shows: "Riyadh Season, Etihad Arena Abu Dhabi, London London Stadium, Glendale, Frankfurt",
-    past_show_url: "https://www.youtube.com/results?search_query=monster+jam+world+tour+live+highlights",
-    venue_fit: "Lusail Stadium outdoor lot or Lusail Multipurpose Arena with custom floor protection",
-    brand_details: "The most action-packed live motorsport tour in the world with iconic 12,000-pound trucks including Grave Digger and Megalodon performing backflips and two-wheel technical skills.",
-    notes: "Proven regional stadium seller in Riyadh and Abu Dhabi."
-  },
-  {
-    title: "The FRIENDS Experience: The One in Doha",
-    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
-    category: "Large-Scale Immersive Walk-Through Exhibition",
-    licensor: "Warner Bros. Discovery Global Themed Entertainment",
-    producer: "Original X Productions (OGX)",
-    person: "Jonathan Mayers (Co-Founder, OGX) / Peter van Roden (SVP, Warner Bros)",
-    website: "https://www.friendstheexperience.com",
-    linkedin_url: "https://www.linkedin.com/company/original-x-productions",
-    email: "info@originalxproductions.com / licensing@warnerbros.com",
-    social: "linkedin.com/company/original-x-productions | @friendstheexperience",
-    past_shows: "New York flagship, Paris Expo, Amsterdam, Birmingham NEC, Phoenix, Sydney",
-    past_show_url: "https://www.youtube.com/results?search_query=the+friends+experience+official+video",
-    venue_fit: "Place Vendôme Mall luxury wing or DECC Gallery; 1,200 sqm setup",
-    brand_details: "Interactive 12-room nostalgia exhibition featuring Central Perk coffee shop, Monica's purple apartment, iconic fountain sofa photo ops, and exclusive limited-edition merchandise.",
-    notes: "High social media UGC driver with premium ticket yields."
   },
   {
     title: "Hans Zimmer Live: Arena World Tour",
@@ -173,60 +95,9 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
     notes: "Low production overhead with extremely high gross profit margin."
   },
   {
-    title: "Cirque du Soleil: Crystal (Acrobatic Ice Show)",
-    image: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=800&q=80",
-    category: "Arena Ice Spectacle / Cirque Acrobatics",
-    licensor: "Cirque du Soleil Entertainment Group",
-    producer: "Cirque du Soleil Touring Arena Division",
-    person: "Stephane Lefebvre (President & CEO) / Daniel Lamarre (Executive Vice-Chairman)",
-    website: "https://www.cirquedusoleil.com/crystal",
-    linkedin_url: "https://www.linkedin.com/company/cirque-du-soleil",
-    email: "arena.touring@cirquedusoleil.com / booking@cirquedusoleil.com",
-    social: "linkedin.com/company/cirque-du-soleil | @cirquedusoleil",
-    past_shows: "Etihad Arena Abu Dhabi, Scotiabank Arena Toronto, Royal Albert Hall London",
-    past_show_url: "https://www.youtube.com/results?search_query=cirque+du+soleil+crystal+official+trailer",
-    venue_fit: "Ali Bin Hamad Al Attiya Arena (ABHA Arena) or Lusail Multipurpose Arena",
-    brand_details: "Cirque du Soleil's first ever acrobatic ice experience, pushing the boundaries of the circus arts on ice. Features swinging trapeze, extreme skating, ramp jumps, and synchronized figure skating.",
-    notes: "World-class brand prestige with premium corporate hospitality potential in Qatar."
-  },
-  {
-    title: "Nerf Action Xperience (Live FEC Pop-Up)",
-    image: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=800&q=80",
-    category: "Interactive Active Entertainment & FEC Pop-Up",
-    licensor: "Hasbro Inc.",
-    producer: "Kingsmen Xperience & Hasbro LBE",
-    person: "Matt Proulx (VP Global Experiences, Hasbro) / Andrew Cheng (Group CEO, Kingsmen)",
-    website: "https://www.nerfax.com",
-    linkedin_url: "https://www.linkedin.com/company/kingsmen-creatives-ltd",
-    email: "nerfexperience@hasbro.com / lbe@kingsmen-int.com",
-    social: "linkedin.com/company/hasbro | @nerfactionxperience",
-    past_shows: "Marina Square Singapore, Manchester Trafford Centre, New Jersey American Dream",
-    past_show_url: "https://www.youtube.com/results?search_query=nerf+action+xperience+official+video",
-    venue_fit: "Doha Festival City or Mall of Qatar; 1,800 sqm active play zone",
-    brand_details: "High-octane active play center featuring tactical blaster battlegrounds, obstacle courses, challenge zones, and customized digital score tracking for kids, teens, and corporate team building.",
-    notes: "Multi-year shopping mall footfall driver with recurring membership model."
-  },
-  {
-    title: "Marvel Studios' Infinity Saga Concert Experience",
-    image: "https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=800&q=80",
-    category: "Live Film Symphony & Arena Orchestral Spectacle",
-    licensor: "Marvel Studios / Disney Concerts",
-    producer: "Disney Concerts & Film Concerts Live",
-    person: "Chip McLean (General Manager, Disney Concerts) / Kevin Feige (President, Marvel)",
-    website: "https://www.disneyconcerts.com",
-    linkedin_url: "https://www.linkedin.com/company/the-walt-disney-company",
-    email: "concerts@disneymusic.com / booking@filmconcertslive.com",
-    social: "linkedin.com/company/the-walt-disney-company | @marvel",
-    past_shows: "Hollywood Bowl, Royal Albert Hall, Sydney Symphony, Tokyo Forum",
-    past_show_url: "https://www.youtube.com/results?search_query=marvel+infinity+saga+concert+experience+live",
-    venue_fit: "Lusail Multipurpose Arena or QNCC Auditorium",
-    brand_details: "Live orchestral journey through 23 blockbuster Marvel films from Iron Man to Avengers: Endgame with a 90-piece orchestra, synchronized giant 4K screen, pyrotechnics, and iconic composer scores.",
-    notes: "Massive youth and superhero fanbase across Doha and GCC."
-  },
-  {
     title: "Squid Game: The Trials Immersive Arena",
     image: "https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=800&q=80",
-    category: "Immersive Competitive Gaming & Pop-Culture Activation",
+    category: "Interactive Active Entertainment & FEC Pop-Up",
     licensor: "Netflix Live Experiences",
     producer: "Netflix & Immersive Gamebox",
     person: "Will Harvey (Director of Innovation, Netflix) / Will Dean (CEO, Immersive Gamebox)",
@@ -241,43 +112,9 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
     notes: "Record-setting streaming IP with massive viral TikTok and Instagram engagement."
   },
   {
-    title: "LEGO Discovery Center Pop-Up Experience",
-    image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80",
-    category: "Interactive Active Entertainment & FEC Pop-Up",
-    licensor: "The LEGO Group",
-    producer: "Merlin Entertainments",
-    person: "Scott O'Neil (CEO, Merlin Entertainments) / Fiona Eastwood (COO, Gateway Attractions)",
-    website: "https://www.legodiscoverycenter.com",
-    linkedin_url: "https://www.linkedin.com/company/merlin-entertainments",
-    email: "lbe.enquiries@merlinentertainments.biz / touring@merlinentertainments.biz",
-    social: "linkedin.com/company/merlin-entertainments | @lego",
-    past_shows: "Brussels, Washington DC, Atlanta, Shanghai, Melbourne, Manchester",
-    past_show_url: "https://www.youtube.com/results?search_query=lego+discovery+center+interactive+experience",
-    venue_fit: "Place Vendôme Mall Doha or QNCC Exhibition Halls",
-    brand_details: "World's most reputable toy brand with 2M+ LEGO bricks, Master Model Builder workshops, 4D cinema experience, and interactive build & race testing ramps.",
-    notes: "Universal parent appeal with high retail merchandise conversion."
-  },
-  {
-    title: "Peppa Pig's Adventure Live!",
-    image: "https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=800&q=80",
-    category: "Touring Stage Musical / Preschool Live Show",
-    licensor: "Hasbro Inc.",
-    producer: "Fierylight & Round Room Live",
-    person: "Richard Lewis (Director, Fierylight) / Stephen Shaw (Producer, Round Room)",
-    website: "https://peppapiglive.com",
-    linkedin_url: "https://www.linkedin.com/company/round-room-live",
-    email: "booking@roundroomlive.com / info@fierylight.biz",
-    social: "linkedin.com/company/round-room-live | @peppapiglive",
-    past_shows: "West End London, 60-city US Tour, Sydney Opera House, Dubai Opera",
-    past_show_url: "https://www.youtube.com/results?search_query=peppa+pig+live+adventure+official+video",
-    venue_fit: "QNCC Theater (2,300 seats); 6 performance weekend schedule",
-    brand_details: "Global preschool phenomenon featuring life-size puppets, sing-along musical numbers, and interactive camping adventures with George, Mummy Pig, and Daddy Pig.",
-    notes: "Tested Middle East hit with sell-out runs in Dubai and Abu Dhabi."
-  },
-  {
     title: "The Lion King: The Landmark Musical Tour",
     image: "https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=800&q=80",
-    category: "Touring Stage Musical / Preschool Live Show",
+    category: "Touring Stage Musical / Broadway Theatrical",
     licensor: "Disney Theatrical Productions",
     producer: "Disney Theatrical Group & Michael Cassel Group",
     person: "Thomas Schumacher (Chief Creative Officer, Disney Theatrical) / Michael Cassel (CEO)",
@@ -291,7 +128,6 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
     brand_details: "Highest-grossing Broadway title in entertainment history ($10B+ worldwide). Julie Taymor's groundbreaking puppetry, Elton John and Tim Rice's timeless score, and 50+ performers.",
     notes: "Prestige cultural milestone event with enormous regional tourism pull from Saudi Arabia and UAE."
   },
-  // Expanded High-Value Touring IPs to guarantee rich multi-week replenishment
   {
     title: "Wicked: The Broadway Musical World Tour",
     image: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80",
@@ -344,23 +180,6 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
     notes: "High youth and extreme sports engagement with explosive viral TikTok/Instagram video capture."
   },
   {
-    title: "Harry Potter: Magic at Play (Family Interactive Exhibition)",
-    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
-    category: "Large-Scale Immersive Walk-Through Exhibition",
-    licensor: "Warner Bros. Discovery Global Themed Entertainment",
-    producer: "Original X Productions (OGX)",
-    person: "Jonathan Mayers (Co-Founder, OGX) / Peter van Roden (SVP, Warner Bros)",
-    website: "https://harrypottermagicatplay.com",
-    linkedin_url: "https://www.linkedin.com/company/original-x-productions",
-    email: "info@originalxproductions.com / partnerships@warnerbros.com",
-    social: "linkedin.com/company/original-x-productions | @harrypottermagicatplay",
-    past_shows: "Water Tower Place Chicago, Seattle, Brussels Expo",
-    past_show_url: "https://www.youtube.com/results?search_query=harry+potter+magic+at+play+trailer",
-    venue_fit: "DECC (Doha Exhibition and Convention Centre) or Place Vendôme Mall",
-    brand_details: "Hands-on interactive discovery experience for younger Potterheads. Features Quidditch training skills, Dursley's fireplace letter room, Potions classroom interactive games, and Butterbeer cafe.",
-    notes: "Ideal for retail mall footfall integration and high dwell-time family spending."
-  },
-  {
     title: "The Lord of the Rings: The Fellowship of the Ring in Concert",
     image: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&w=800&q=80",
     category: "Live Film Symphony & Arena Orchestral Spectacle",
@@ -378,55 +197,225 @@ export const GLOBAL_IP_DISCOVERY_POOL = [
     notes: "Prestige cultural event with sellout track record across Europe, Asia, and the Americas."
   },
   {
-    title: "BBC Earth Experience: Seven Worlds, One Planet",
-    image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80",
-    category: "Large-Scale Immersive Walk-Through Exhibition",
-    licensor: "BBC Studios Natural History Unit",
-    producer: "Moongate Productions & Live Nation",
-    person: "Phil Murphy (Global Touring Director, BBC Studios) / Sir David Attenborough (Narrator)",
-    website: "https://bbcearthexperience.com",
-    linkedin_url: "https://www.linkedin.com/company/bbc-studios",
-    email: "naturalhistory@bbc.com / lbe@livenation.com",
-    social: "linkedin.com/company/bbc-studios | @bbcearth",
-    past_shows: "The Daikin Centre London, Melbourne Convention & Exhibition Centre",
-    past_show_url: "https://www.youtube.com/results?search_query=bbc+earth+experience+london+trailer",
-    venue_fit: "DECC (Doha Exhibition and Convention Centre); 2,500 sqm modular pavilion",
-    brand_details: "360-degree audiovisual journey through the natural wonders of our planet narrated by Sir David Attenborough. Massive multi-angle projection screens, spatial 3D audio, and interactive touch tables.",
-    notes: "Outstanding educational and government stakeholder alignment with Qatar Tourism and Ministry of Education."
-  },
-  {
-    title: "Sesame Street Live!: Make Your Magic",
+    title: "Bridgerton: The Queen's Ball Immersive Experience",
     image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
-    category: "Touring Stage Musical / Preschool Live Show",
-    licensor: "Sesame Workshop",
-    producer: "Feld Entertainment",
-    person: "Kenneth Feld (CEO) / Whit Higgins (EVP Global Touring, Sesame Workshop)",
-    website: "https://www.sesamestreetlive.com",
-    linkedin_url: "https://www.linkedin.com/company/sesame-workshop",
-    email: "booking@feldinc.com / lbe@sesame.org",
-    social: "linkedin.com/company/sesame-workshop | @sesamestreet",
-    past_shows: "Beacon Theatre New York, Fox Theatre Atlanta, 50-city US Tour, Tokyo",
-    past_show_url: "https://www.youtube.com/results?search_query=sesame+street+live+make+your+magic+trailer",
-    venue_fit: "QNCC Theater (2,300 seats); ideal Ramadan/Eid family scheduling",
-    brand_details: "The most trusted preschool brand on earth featuring Elmo, Big Bird, Cookie Monster, and Abby Cadabby in a Broadway-style musical adventure teaching children that with determination, anything is possible.",
-    notes: "Universal family trust with immense VIP character meet-and-greet premium revenue."
+    category: "Large-Scale Immersive Walk-Through Exhibition",
+    licensor: "Netflix & Shondaland",
+    producer: "Fever Labs Live Experiences",
+    person: "Ignacio Bachiller (CEO, Fever) / Shonda Rhimes (Executive Producer)",
+    website: "https://bridgertonexperience.com",
+    linkedin_url: "https://www.linkedin.com/company/fever-up",
+    email: "partnerships@feverup.com / info@feverup.com",
+    social: "linkedin.com/company/fever-up | @bridgertonexperience",
+    past_shows: "Los Angeles Biltmore Hotel, New York, Toronto, London, Chicago",
+    past_show_url: "https://www.youtube.com/results?search_query=the+queens+ball+bridgerton+experience+trailer",
+    venue_fit: "Katara Cultural Village or Place Vendôme Grand Court; luxury lifestyle pop-up",
+    brand_details: "High-society immersive Regency ball featuring live string quartet performing modern pop hits, period-accurate costumed actors, acrobatic dance, and Queen Charlotte audience honors.",
+    notes: "Extreme viral social media appeal with premier female demographic retail engagement."
   },
   {
-    title: "Monopoly Lifesized: The Interactive Game Experience",
-    image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80",
-    category: "Interactive Active Entertainment & FEC Pop-Up",
-    licensor: "Hasbro Inc.",
-    producer: "Gamepath Entertainment",
-    person: "David Hutchinson (CEO, Gamepath) / Matt Proulx (VP Global Experiences, Hasbro)",
-    website: "https://www.monopolylifesized.com",
-    linkedin_url: "https://www.linkedin.com/company/gamepath-entertainment",
-    email: "info@gamepathentertainment.com / lbe@hasbro.com",
-    social: "linkedin.com/company/hasbro | @monopolylifesized",
-    past_shows: "Tottenham Court Road London, Riyadh Season Boulevard World",
-    past_show_url: "https://www.youtube.com/results?search_query=monopoly+lifesized+london+trailer",
-    venue_fit: "Place Vendôme Mall or Mall of Qatar; 1,500 sqm retail footprint",
-    brand_details: "Immersive 4D real-world board game where players solve escape-room style puzzles to build houses and buy properties on a giant 15m x 15m board guided by live actors.",
-    notes: "Tested sellout hit in Riyadh Season with outstanding dwell times and F&B integration."
+    title: "Batman: The Dark Knight Immersive Experience",
+    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    category: "Large-Scale Immersive Walk-Through Exhibition",
+    licensor: "DC Entertainment & Warner Bros.",
+    producer: "Original X Productions (OGX) & Warner Bros. Themed Entertainment",
+    person: "Jonathan Mayers (Co-Founder, OGX) / Peter van Roden (SVP, Warner Bros)",
+    website: "https://batmanexperience.com",
+    linkedin_url: "https://www.linkedin.com/company/original-x-productions",
+    email: "info@originalxproductions.com / licensing@warnerbros.com",
+    social: "linkedin.com/company/original-x-productions | @dc",
+    past_shows: "London Soho, San Diego Comic-Con flagship, Paris Expo",
+    past_show_url: "https://www.youtube.com/results?search_query=batman+experience+dark+knight+exhibition+trailer",
+    venue_fit: "DECC (Doha Exhibition and Convention Centre) Hall 2 or Place Vendôme",
+    brand_details: "Enter Gotham City in a multi-room detective walkthrough. Features full-scale Batmobiles, the Batcave control center, Arkham Asylum rogue gallery exhibits, and interactive escape puzzles.",
+    notes: "Dominant superhero fanbase across all age brackets with heavy collectible merchandise yields."
+  },
+  {
+    title: "Lord of the Dance: 30th Anniversary World Tour",
+    image: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80",
+    category: "Touring Stage Musical / Broadway Theatrical",
+    licensor: "Unicorn Entertainment",
+    producer: "Michael Flatley & Live Nation Worldwide",
+    person: "Michael Flatley (Creator & Director) / Mark Sutcliffe (Tour Director)",
+    website: "https://lordofthedance.com",
+    linkedin_url: "https://www.linkedin.com/company/live-nation",
+    email: "touring@lordofthedance.com / info@livenation.com",
+    social: "linkedin.com/company/live-nation | @lordofthedance",
+    past_shows: "Over 60M attendees across 60 countries, London Palladium, Wembley, Tokyo Budokan",
+    past_show_url: "https://www.youtube.com/results?search_query=lord+of+the+dance+30th+anniversary+tour+trailer",
+    venue_fit: "QNCC Theater (2,300 seats); ideal 4-day weekend residency",
+    brand_details: "The most successful touring dance production in history. High-energy synchronization of 40 world-champion Irish dancers, cutting-edge stage lighting, pyrotechnics, and Celtic musical orchestration.",
+    notes: "Guaranteed standing-ovation crowd pleaser with flawless international touring track record."
+  },
+  {
+    title: "Dune: The Symphonic Odyssey Live",
+    image: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&w=800&q=80",
+    category: "Live Film Symphony & Arena Orchestral Spectacle",
+    licensor: "Legendary Entertainment",
+    producer: "WaterTower Music & Semmel Concerts",
+    person: "Hans Zimmer (Composer) / Dieter Semmelmann (CEO, Semmel)",
+    website: "https://duneinconcert.com",
+    linkedin_url: "https://www.linkedin.com/company/legendary-entertainment",
+    email: "concerts@watertowermusic.com / promoter@semmel.de",
+    social: "linkedin.com/company/legendary-entertainment | @dunemovie",
+    past_shows: "Accor Arena Paris, Ziggo Dome Amsterdam, Royal Albert Hall",
+    past_show_url: "https://www.youtube.com/results?search_query=dune+live+concert+hans+zimmer+footage",
+    venue_fit: "Lusail Multipurpose Arena or QNCC Auditorium",
+    brand_details: "Academy Award-winning Dune and Dune: Part Two scores performed live with exotic throat singing, electric cellos, ethnic woodwinds, and colossal choral ensembles synchronized to 4K cinematic sequences.",
+    notes: "Profound synergy with Middle Eastern desert aesthetics and prestigious film audiences."
+  },
+  {
+    title: "Tutankhamun: His Tomb and His Treasures",
+    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
+    category: "Large-Scale Immersive Walk-Through Exhibition",
+    licensor: "Semmel Exhibitions GmbH",
+    producer: "Semmel Concerts & SC Exhibitions",
+    person: "Christoph Scholz (Head of Exhibitions) / Dieter Semmelmann (CEO)",
+    website: "https://tutankhamunexhibition.com",
+    linkedin_url: "https://www.linkedin.com/company/semmel-concerts-entertainment-gmbh",
+    email: "exhibitions@semmel.de / info@tutankhamunexhibition.com",
+    social: "linkedin.com/company/semmel-concerts-entertainment-gmbh | @tutankhamun",
+    past_shows: "Over 6.5M visitors globally, Paris Expo, Olympia London, Frankfurt, Washington DC",
+    past_show_url: "https://www.youtube.com/results?search_query=tutankhamun+his+tomb+and+his+treasures+trailer",
+    venue_fit: "DECC (Doha Exhibition and Convention Centre) or Katara Cultural Village",
+    brand_details: "Magnificent archaeological reconstruction of the tomb of Tutankhamun with over 1,000 certified master replicas crafted by Egyptian craftsmen, virtual reality headsets, and audio guides.",
+    notes: "Exceptional educational credibility with school networks and international cultural tourism."
+  },
+  {
+    title: "NASA: A Human Adventure Exhibition",
+    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    category: "Large-Scale Immersive Walk-Through Exhibition",
+    licensor: "NASA & Kansas Cosmosphere",
+    producer: "John Nurminen Events & Cosmosphere",
+    person: "Jukka Nurminen (Executive Producer) / Jim Remar (CEO, Cosmosphere)",
+    website: "https://ahumanadventure.com",
+    linkedin_url: "https://www.linkedin.com/company/john-nurminen-events",
+    email: "info@ahumanadventure.com / touring@cosmo.org",
+    social: "linkedin.com/company/john-nurminen-events | @nasa",
+    past_shows: "Stockholm, Madrid, Seoul, Tokyo, Singapore ArtScience Museum, Istanbul",
+    past_show_url: "https://www.youtube.com/results?search_query=nasa+a+human+adventure+exhibition+trailer",
+    venue_fit: "DECC (Doha Exhibition and Convention Centre); 2,500 sqm pavilion",
+    brand_details: "Comprehensive space exploration exhibition featuring over 250 authentic flown artifacts, Mercury and Apollo capsule cockpits, lunar rover replicas, and astronaut training centrifuge simulators.",
+    notes: "Direct alignment with Qatar National Vision 2030 STEM education initiatives."
+  },
+  {
+    title: "Titanic: The Artifact Exhibition",
+    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    category: "Large-Scale Immersive Walk-Through Exhibition",
+    licensor: "RMS Titanic, Inc.",
+    producer: "Premier Exhibitions & E/M Group",
+    person: "Jessica Sanders (President, RMS Titanic, Inc.) / Tomas Lindgren (Producer)",
+    website: "https://titanictheartifactexhibition.com",
+    linkedin_url: "https://www.linkedin.com/company/rms-titanic-inc-",
+    email: "touring@emgroup.com / info@rmstitanic.com",
+    social: "linkedin.com/company/rms-titanic-inc- | @titanic_exhibition",
+    past_shows: "Seen by 30M+ visitors worldwide, London Docklands, Paris Expo, Las Vegas Luxor, Sydney",
+    past_show_url: "https://www.youtube.com/results?search_query=titanic+the+artifact+exhibition+official+trailer",
+    venue_fit: "DECC Hall 3 or Katara Cultural Village; 2,000 sqm walk-through",
+    brand_details: "Authentic artifacts recovered from 2.5 miles beneath the Atlantic Ocean. Reconstructed first-class suites, full-scale Grand Staircase photo moment, and an actual touchable iceberg wall.",
+    notes: "One of the highest grossing touring museum exhibitions in history with strong family and senior demographics."
+  },
+  {
+    title: "The World of Tim Burton Touring Exhibition",
+    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
+    category: "Large-Scale Immersive Walk-Through Exhibition",
+    licensor: "Tim Burton Productions",
+    producer: "Independent Curators International (ICI) & Tim Burton",
+    person: "Jenny He (Independent Curator) / Derek Frey (Producer, Tim Burton Productions)",
+    website: "https://timburton.com/exhibitions",
+    linkedin_url: "https://www.linkedin.com/company/independent-curators-international",
+    email: "exhibitions@timburton.com / info@curatorsintl.org",
+    social: "linkedin.com/company/independent-curators-international | @timburton",
+    past_shows: "Design Museum London, MoMA New York, Seoul Museum of Art, Prague, Hong Kong",
+    past_show_url: "https://www.youtube.com/results?search_query=the+world+of+tim+burton+exhibition+trailer",
+    venue_fit: "Katara Cultural Village or Msheireb Museums Heritage Quarter",
+    brand_details: "Over 500 original drawings, paintings, maquettes, and costumes from Beetlejuice, Edward Scissorhands, Wednesday, and Corpse Bride exploring Burton's singular gothic imagination.",
+    notes: "Massive youth, film student, and arts demographic appeal with huge social media UGC."
+  },
+  {
+    title: "STOMP: International Percussion Sensation",
+    image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+    category: "Touring Stage Musical / Broadway Theatrical",
+    licensor: "Yes/No Productions",
+    producer: "Glynis Henderson Productions & Bang! Theatrical",
+    person: "Luke Cresswell & Steve McNicholas (Creators) / Glynis Henderson (Producer)",
+    website: "https://stomponline.com",
+    linkedin_url: "https://www.linkedin.com/company/glynis-henderson-productions",
+    email: "booking@ghmp.co.uk / info@stomponline.com",
+    social: "linkedin.com/company/glynis-henderson-productions | @stompuk",
+    past_shows: "50+ countries, West End London, Orpheum Theatre NYC, Sydney Opera House, Dubai Opera",
+    past_show_url: "https://www.youtube.com/results?search_query=stomp+official+trailer+live+percussion",
+    venue_fit: "QNCC Theater (2,300 seats); 5-show weekend run",
+    brand_details: "Universal language of rhythm and comedy. Eight performers create infectious beats using matchboxes, wooden poles, brooms, garbage cans, and kitchen sinks with zero spoken dialogue.",
+    notes: "Zero language barrier; performs exceptionally well with multi-national expat and local audiences."
+  },
+  {
+    title: "Blue Man Group World Tour",
+    image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+    category: "Touring Stage Musical / Broadway Theatrical",
+    licensor: "Cirque du Soleil Entertainment Group",
+    producer: "Blue Man Group Touring & Cirque du Soleil",
+    person: "Jack Kenn (Managing Director, Blue Man Group) / Stephane Lefebvre (CEO)",
+    website: "https://blueman.com",
+    linkedin_url: "https://www.linkedin.com/company/cirque-du-soleil",
+    email: "touring@blueman.com / international@cirquedusoleil.com",
+    social: "linkedin.com/company/cirque-du-soleil | @bluemangroup",
+    past_shows: "Over 35M people, London, Tokyo, Singapore, Dubai Opera, Zurich, Frankfurt",
+    past_show_url: "https://www.youtube.com/results?search_query=blue+man+group+official+world+tour+trailer",
+    venue_fit: "QNCC Theater (2,300 seats); high family and corporate appeal",
+    brand_details: "Three bald, blue performers take audiences on a wildly inventive journey through music, art, and laughter featuring signature paint drums, custom PVC pipe percussion, and audience participation.",
+    notes: "Iconic global comedy spectacle requiring zero language translation."
+  },
+  {
+    title: "Walking with Dinosaurs: Arena Spectacular",
+    image: "https://images.unsplash.com/photo-1570458436416-b8fcccfe883f?auto=format&fit=crop&w=800&q=80",
+    category: "Arena Motorsport & Stunt Entertainment",
+    licensor: "BBC Studios Worldwide",
+    producer: "Global Creatures & BBC Live",
+    person: "Carmen Pavlovic (CEO, Global Creatures) / Gerry Ryan (Producer)",
+    website: "https://dinosaurlive.com",
+    linkedin_url: "https://www.linkedin.com/company/global-creatures",
+    email: "touring@global-creatures.com / international@dinosaurlive.com",
+    social: "linkedin.com/company/global-creatures | @dinosaurlive",
+    past_shows: "9M people in 250 cities, O2 London, Staples Center LA, Mercedes-Benz Arena Berlin",
+    past_show_url: "https://www.youtube.com/results?search_query=walking+with+dinosaurs+arena+spectacular+trailer",
+    venue_fit: "Lusail Multipurpose Arena or Ali Bin Hamad Al Attiya Arena (ABHA)",
+    brand_details: "Twenty million dollar live arena spectacle featuring 18 life-size, state-of-the-art animatronic dinosaurs including the mighty T-Rex, Brachiosaurus, and Stegosaurus walking and roaring in real time.",
+    notes: "Epic arena ticket sales powerhouse with unforgettable family appeal."
+  },
+  {
+    title: "Illusionists: Direct from Broadway Arena Tour",
+    image: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80",
+    category: "Touring Stage Musical / Broadway Theatrical",
+    licensor: "The Works Entertainment Group",
+    producer: "Simon Painter & Tim Lawson (for Cirque du Soleil)",
+    person: "Simon Painter (Executive Producer) / Tim Lawson (CEO, TML)",
+    website: "https://theillusionistslive.com",
+    linkedin_url: "https://www.linkedin.com/company/the-works-entertainment",
+    email: "booking@theworksent.com / info@theillusionistslive.com",
+    social: "linkedin.com/company/the-works-entertainment | @theillusionistslive",
+    past_shows: "Record-shattering Broadway box office, West End Shaftesbury Theatre, Sydney Opera House",
+    past_show_url: "https://www.youtube.com/results?search_query=the+illusionists+live+from+broadway+trailer",
+    venue_fit: "QNCC Theater or Lusail Multipurpose Arena; 4-day weekend staging",
+    brand_details: "World's biggest-selling magic show starring the world's greatest illusionists performing death-defying escapes, mentalism, and jaw-dropping stage magic with high-definition arena cameras.",
+    notes: "Proven smash hit in GCC markets including Dubai, Riyadh, and Abu Dhabi."
+  },
+  {
+    title: "Doctor Who: Worlds of Wonder Exhibition",
+    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    category: "Large-Scale Immersive Walk-Through Exhibition",
+    licensor: "BBC Studios",
+    producer: "Sarner International & BBC Live Events",
+    person: "Ross Magri (Managing Director, Sarner) / Paul Finch (Director, BBC Studios)",
+    website: "https://doctorwho.tv",
+    linkedin_url: "https://www.linkedin.com/company/bbc-studios",
+    email: "liveevents@bbc.com / info@sarner.com",
+    social: "linkedin.com/company/bbc-studios | @bbcdoctorwho",
+    past_shows: "World Museum Liverpool, National Museum of Scotland Edinburgh, Wellington New Zealand",
+    past_show_url: "https://www.youtube.com/results?search_query=doctor+who+worlds+of+wonder+exhibition+trailer",
+    venue_fit: "DECC (Doha Exhibition and Convention Centre); 1,500 sqm requirement",
+    brand_details: "Explore the real scientific principles behind the legendary science-fiction franchise. Walk through the TARDIS control room, encounter Daleks and Cybermen, and travel through black holes.",
+    notes: "Strong STEM educational alignment with multi-generation cult appeal."
   }
 ];
 
@@ -444,18 +433,16 @@ function generateAlgorithmicCandidate(existingIPsCount = 0) {
   ];
 
   const franchises = [
-    { title: "Star Wars: The Empire Strikes Back in Concert", licensor: "Lucasfilm & Disney Concerts", producer: "Film Concerts Live", email: "concerts@disneymusic.com" },
-    { title: "Jurassic World: Dino Safari Live Walkthrough", licensor: "Universal Destinations & Experiences", producer: "NEON Global", email: "inquiries@neonglobal.com" },
-    { title: "Sonic the Hedgehog: Speed Zone Live Pop-Up", licensor: "SEGA Corporation", producer: "Immersive Gamebox & SEGA LBE", email: "licensing@sega.com" },
-    { title: "Peaky Blinders: The Live Theatrical Tour", licensor: "Caryn Mandabach Productions & BBC", producer: "Rambert Dance Company", email: "touring@rambert.org.uk" },
-    { title: "Top Gear Live: Arena Stunt Challenge", licensor: "BBC Studios Distribution", producer: "Live Nation Touring", email: "motoring@bbc.com" },
-    { title: "Game of Thrones: Live Concert Experience", licensor: "HBO / Warner Bros. Discovery", producer: "Live Nation Global Touring", email: "touring@livenation.com" },
-    { title: "Avatar: Discover Pandora Immersive Exhibition", licensor: "20th Century Studios & Lightstorm", producer: "Cityneon / NEON Global", email: "info@neonglobal.com" },
-    { title: "National Geographic: Pristine Seas Immersive Pavilion", licensor: "National Geographic Society", producer: "Falcon's Beyond & NatGeo LBE", email: "exhibitions@natgeo.com" },
-    { title: "Barbie: You Can Be Anything Tour", licensor: "Mattel Live Experiences", producer: "Family Entertainment Live", email: "booking@familyentertainmentlive.com" },
-    { title: "Paddington Bear: The Musical Stage Adventure", licensor: "StudioCanal & The Copyrights Group", producer: "Sonia Friedman Productions", email: "info@soniafriedman.com" },
-    { title: "BBC Blue Planet II in Concert", licensor: "BBC Studios Natural History Unit", producer: "FKP Scorpio Touring", email: "info@fkpscorpio.com" },
-    { title: "Marvel: Avengers S.T.A.T.I.O.N. 2.0 Residency", licensor: "Marvel Entertainment", producer: "Victory Hill Exhibitions & NEON", email: "licensing@neonglobal.com" }
+    { title: "Moulin Rouge! The Musical World Tour", licensor: "Global Creatures & Bazmark", producer: "Carmen Pavlovic", email: "touring@global-creatures.com" },
+    { title: "Chicago: The Musical Broadway Tour", licensor: "Barry & Fran Weissler", producer: "NAMCO Live", email: "info@chicagothemusical.com" },
+    { title: "Cats: The Musical World Tour", licensor: "The Really Useful Group", producer: "Crossroads Live", email: "international@reallyuseful.com" },
+    { title: "Riverdance: 30th Anniversary Tour", licensor: "Abhann Productions", producer: "Moya Doherty", email: "info@riverdance.com" },
+    { title: "ABBA Voyage: Mobile Arena Residency", licensor: "Aniara Ltd & Polar Music", producer: "Svana Gisla", email: "touring@abbavoyage.com" },
+    { title: "Matilda the Musical: Royal Shakespeare Company", licensor: "RSC & Roald Dahl Story Co", producer: "André Ptaszynski", email: "licensing@rsc.org.uk" },
+    { title: "Mamma Mia! The Smash Hit Musical", licensor: "Littlestar Services", producer: "Judy Craymer", email: "info@mamma-mia.com" },
+    { title: "The Simon & Garfunkel Story World Tour", licensor: "Maple Tree Entertainment", producer: "Dean Elliott", email: "booking@mapletreeentertainment.com" },
+    { title: "Real Bodies: The Global Anatomy Exhibition", licensor: "Imagine Exhibitions Inc", producer: "Tom Zaller", email: "info@imagineexhibitions.com" },
+    { title: "Banksy: Without Limits Touring Exhibition", licensor: "Musealia Entertainment", producer: "Luis Ferreiro", email: "info@musealia.net" }
   ];
 
   const pick = franchises[existingIPsCount % franchises.length];
@@ -483,30 +470,37 @@ function generateAlgorithmicCandidate(existingIPsCount = 0) {
 }
 
 /**
- * Extracts at least 10 brand-new, unique entertainment IPs
- * Strictly checks existing IPs to guarantee NOTHING IS REPEATED
+ * Extracts brand-new, verified entertainment IPs
+ * Strictly checks existing IPs to guarantee ZERO DUPLICATES OR FRANCHISE OVERLAPS
  */
 export function extractDailyIPs(existingIPs = [], count = 10) {
-  // Build a set of all existing normalized titles and ids
-  const existingSignatures = new Set(
-    existingIPs.map(ip => normalizeSignature(ip.title))
-  );
+  // Find candidates from pool that have NOT been ingested yet and don't duplicate any existing franchise
+  const acceptedCandidates = [];
+  const candidateSignatures = new Set();
 
-  // Find candidates from pool that have NOT been ingested yet
-  let availableCandidates = GLOBAL_IP_DISCOVERY_POOL.filter(candidate => {
+  for (const candidate of GLOBAL_IP_DISCOVERY_POOL) {
+    if (acceptedCandidates.length >= count) break;
+    const isDupOfExisting = isDuplicateOf(candidate.title, existingIPs);
+    const isDupOfBatch = isDuplicateOf(candidate.title, acceptedCandidates);
     const sig = normalizeSignature(candidate.title);
-    return !existingSignatures.has(sig);
-  });
 
-  // If pool is getting low, synthesize unique algorithmic candidates so it never dries up
-  if (availableCandidates.length < count) {
+    if (!isDupOfExisting && !isDupOfBatch && !candidateSignatures.has(sig)) {
+      candidateSignatures.add(sig);
+      acceptedCandidates.push(candidate);
+    }
+  }
+
+  // If pool is exhausted, synthesize unique algorithmic candidates with strict duplicate checks
+  if (acceptedCandidates.length < count) {
     let synthIndex = existingIPs.length;
-    while (availableCandidates.length < count) {
+    let attempts = 0;
+    while (acceptedCandidates.length < count && attempts < 100) {
+      attempts++;
       const synth = generateAlgorithmicCandidate(synthIndex++);
       const sig = normalizeSignature(synth.title);
-      if (!existingSignatures.has(sig)) {
-        existingSignatures.add(sig);
-        availableCandidates.push(synth);
+      if (!isDuplicateOf(synth.title, existingIPs) && !isDuplicateOf(synth.title, acceptedCandidates) && !candidateSignatures.has(sig)) {
+        candidateSignatures.add(sig);
+        acceptedCandidates.push(synth);
       }
     }
   }
@@ -521,10 +515,7 @@ export function extractDailyIPs(existingIPs = [], count = 10) {
     }
   });
 
-  // Pick up to `count` unique candidates
-  const selectedCandidates = availableCandidates.slice(0, count);
-
-  const newIPs = selectedCandidates.map((candidate, idx) => {
+  const newIPs = acceptedCandidates.map((candidate, idx) => {
     const newIdNum = maxIdNum + 1 + idx;
     const newId = `IP-${String(newIdNum).padStart(3, '0')}`;
 

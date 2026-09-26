@@ -9,6 +9,8 @@
  * 4. Local-first caching guarantees 100% functionality even during Neon cold boot or offline mode.
  */
 
+import { sanitizeAndDeduplicateIPs } from '../data/ips';
+
 // UNIFIED STORAGE KEY (Matches src/data/ips.js)
 const LOCAL_STORAGE_KEY = 'doha_entertainment_ips_react';
 const LAST_SYNC_KEY = 'doha_entertainment_ips_last_sync';
@@ -44,11 +46,13 @@ export const NeonDbService = {
             };
           });
 
+          const deduplicated = sanitizeAndDeduplicateIPs(normalized);
+
           // Cache to unified localStorage
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalized));
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(deduplicated));
           localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
           return {
-            ips: normalized,
+            ips: deduplicated,
             source: data.source || 'neon-serverless',
             status: 'connected'
           };
@@ -64,12 +68,17 @@ export const NeonDbService = {
       try {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return { ips: parsed, source: 'local-cache', status: 'cached' };
+          const deduplicated = sanitizeAndDeduplicateIPs(parsed);
+          if (deduplicated.length !== parsed.length) {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(deduplicated));
+          }
+          return { ips: deduplicated, source: 'local-cache', status: 'cached' };
         }
       } catch (e) {}
     }
 
-    return { ips: fallbackData, source: 'seed-bundle', status: 'seed' };
+    const cleanFallback = sanitizeAndDeduplicateIPs(fallbackData);
+    return { ips: cleanFallback, source: 'seed-bundle', status: 'seed' };
   },
 
   /**

@@ -908,6 +908,167 @@ export function matchesCategory(ipCategory = '', filterId = 'all') {
 }
 
 /**
+ * High-performance string normalization for search & deduplication:
+ * Strips accents/diacritics (e.g. Vendôme -> Vendome), punctuation, and collapses spaces.
+ */
+export function normalizeSearchText(str = '') {
+  return (str || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+    .toLowerCase()
+    .replace(/['’".,\/#!$%\^&\*;:{}=\-_`~()\[\]]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Comprehensive multi-token search matcher:
+ * Splits user query into individual words and verifies that EVERY word matches somewhere
+ * across title, licensor, producer, category, venue, contact person, email, notes, brand_details, etc.
+ */
+export function matchesSearch(ip, query = '') {
+  if (!query || !query.trim()) return true;
+
+  const cleanQuery = normalizeSearchText(query);
+  const queryTokens = cleanQuery.split(' ').filter(Boolean);
+  if (queryTokens.length === 0) return true;
+
+  const venueStr = typeof ip.venue_fit === 'string'
+    ? ip.venue_fit
+    : (Array.isArray(ip.venue_fit) ? ip.venue_fit.join(' ') : (ip.venue_fit ? JSON.stringify(ip.venue_fit) : ''));
+
+  const detailsStr = typeof ip.brand_details === 'string'
+    ? ip.brand_details
+    : JSON.stringify(ip.brand_details || '');
+
+  // Aggregated searchable corpus
+  const corpus = normalizeSearchText([
+    ip.id,
+    ip.title,
+    ip.category,
+    ip.licensor,
+    ip.producer,
+    ip.person,
+    ip.email,
+    ip.website,
+    ip.social,
+    venueStr,
+    ip.notes,
+    detailsStr,
+    ip.past_shows,
+    ip.status
+  ].filter(Boolean).join(' '));
+
+  return queryTokens.every(token => corpus.includes(token));
+}
+
+/**
+ * Key franchise roots for preventing franchise duplicates
+ */
+export const KNOWN_FRANCHISE_KEYS = [
+  'cocomelon', 'bluey', 'hot wheels', 'jurassic', 'harry potter', 'monopoly',
+  'blippi', 'nerf', 'peanuts', 'snoopy', 'paw patrol', 'katmandu', 'marvel',
+  'pixar', 'peppa pig', 'minecraft', 'disney on ice', 'barbie', 'monster jam',
+  'friends', 'transformers', 'lol surprise', 'sesame street', 'smurfs', 'disney jr',
+  'bbc earth', 'caterpillar', 'crayola', 'shaun the sheep', 'paddington',
+  'dinos alive', 'thomas', 'cirque du soleil', 'angry birds', 'brick', 'lego',
+  'masha', 'miraculous', 'sonic', 'pokemon', 'dora', 'care bears', 'play-doh',
+  'geronimo stilton', 'wallace', 'gigantosaurus'
+];
+
+export function getFranchiseKey(title = '') {
+  const norm = normalizeSearchText(title).replace(/\s+/g, '');
+  for (const k of KNOWN_FRANCHISE_KEYS) {
+    const cleanK = normalizeSearchText(k).replace(/\s+/g, '');
+    if (norm.includes(cleanK)) return cleanK;
+  }
+  return null;
+}
+
+export function isDuplicateOf(title = '', existingList = []) {
+  const normTitle = normalizeSearchText(title).replace(/\s+/g, '');
+  const franchise = getFranchiseKey(title);
+
+  return existingList.some(item => {
+    const itemNorm = normalizeSearchText(item.title).replace(/\s+/g, '');
+    if (normTitle === itemNorm) return true;
+    if (normTitle.length >= 8 && itemNorm.length >= 8) {
+      if (normTitle.includes(itemNorm) || itemNorm.includes(normTitle)) return true;
+    }
+    if (franchise) {
+      const itemFranchise = getFranchiseKey(item.title);
+      if (itemFranchise && itemFranchise === franchise) return true;
+    }
+    return false;
+  });
+}
+
+/**
+ * Sanitizes and deduplicates a list of IPs:
+ * Guarantees that canonical properties (IP-001 to IP-044) are preserved,
+ * and any duplicate title or franchise entries are permanently dropped.
+ */
+export function sanitizeAndDeduplicateIPs(list = []) {
+  if (!Array.isArray(list) || list.length === 0) {
+    return JSON.parse(JSON.stringify(INITIAL_IPS));
+  }
+
+  const canonicalIds = new Set(INITIAL_IPS.map(i => i.id));
+  const seenSignatures = new Set();
+  const seenFranchises = new Set();
+  const seenIds = new Set();
+  const result = [];
+
+  // 1. First add all canonical IPs (IP-001 through IP-044)
+  INITIAL_IPS.forEach(canon => {
+    const stored = list.find(l => l.id === canon.id);
+    const item = stored ? {
+      ...canon,
+      ...stored,
+      image: stored.image || canon.image,
+      brand_details: stored.brand_details || canon.brand_details,
+      past_show_url: stored.past_show_url || canon.past_show_url,
+      linkedin_url: stored.linkedin_url || canon.linkedin_url,
+      website: stored.website || canon.website
+    } : { ...canon };
+
+    item.status = (!item.status || item.status === 'Prospect') ? 'Not Contacted' : item.status;
+    result.push(item);
+
+    seenIds.add(item.id);
+    const sig = normalizeSearchText(item.title).replace(/\s+/g, '');
+    seenSignatures.add(sig);
+    const fk = getFranchiseKey(item.title);
+    if (fk) seenFranchises.add(fk);
+  });
+
+  // 2. Add extra dynamic items ONLY if truly unique
+  list.forEach(item => {
+    if (!item || !item.id || canonicalIds.has(item.id) || seenIds.has(item.id)) return;
+
+    const sig = normalizeSearchText(item.title).replace(/\s+/g, '');
+    const fk = getFranchiseKey(item.title);
+
+    // Drop if title signature or franchise was already registered
+    if (seenSignatures.has(sig)) return;
+    if (fk && seenFranchises.has(fk)) return;
+    if (isDuplicateOf(item.title, result)) return;
+
+    seenIds.add(item.id);
+    seenSignatures.add(sig);
+    if (fk) seenFranchises.add(fk);
+
+    result.push({
+      ...item,
+      status: (!item.status || item.status === 'Prospect') ? 'Not Contacted' : item.status
+    });
+  });
+
+  return result;
+}
+
+/**
  * Determine if an IP was discovered today or via daily discovery
  */
 export function isTodayLead(ip) {
@@ -924,27 +1085,12 @@ export function loadIPs() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((item) => {
-          const init = INITIAL_IPS.find((ip) => ip.id === item.id);
-          const normalizedStatus = (!item.status || item.status === 'Prospect') ? 'Not Contacted' : item.status;
-          if (init) {
-            return {
-              ...init,
-              ...item,
-              status: normalizedStatus,
-              // Always guarantee enriched fields & verified images
-              image: item.image || init.image,
-              brand_details: item.brand_details || init.brand_details,
-              past_show_url: item.past_show_url || init.past_show_url,
-              linkedin_url: item.linkedin_url || init.linkedin_url,
-              website: item.website || init.website
-            };
-          }
-          return {
-            ...item,
-            status: normalizedStatus
-          };
-        });
+        const cleaned = sanitizeAndDeduplicateIPs(parsed);
+        // If duplicates or legacy items were removed, heal localStorage immediately
+        if (cleaned.length !== parsed.length) {
+          saveIPs(cleaned);
+        }
+        return cleaned;
       }
     }
   } catch (err) {
@@ -955,7 +1101,8 @@ export function loadIPs() {
 
 export function saveIPs(ips) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ips));
+    const sanitized = sanitizeAndDeduplicateIPs(ips);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
   } catch (err) {
     console.warn('Failed saving IPs to localStorage', err);
   }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, LayoutGrid, Layers, Table, MapPin, X, RotateCcw } from 'lucide-react';
+import { Search, LayoutGrid, Layers, Table, MapPin, X, RotateCcw, Sparkles } from 'lucide-react';
 
 export default function ControlBar({
   viewMode,
@@ -21,7 +21,9 @@ export default function ControlBar({
   venueCounts = {},
   onExtractDailyIPs,
   filteredCount,
-  totalCount
+  totalCount,
+  isGlobalSearchFallback = false,
+  onResetFilters
 }) {
   const isAnyFilterActive = Boolean(
     searchQuery.trim() ||
@@ -58,11 +60,15 @@ export default function ControlBar({
   };
 
   const handleResetFilters = () => {
-    setSearchQuery('');
-    setFilterCategory('all');
-    setFilterVenue('all');
-    setFilterStatus('all');
-    setFilterLeadType('all');
+    if (onResetFilters) {
+      onResetFilters();
+    } else {
+      setSearchQuery('');
+      setFilterCategory('all');
+      setFilterVenue('all');
+      setFilterStatus('all');
+      setFilterLeadType('all');
+    }
   };
 
   const CATEGORY_CHIPS = [
@@ -202,6 +208,51 @@ export default function ControlBar({
           </div>
 
         </div>
+        
+        {/* Global Search Intelligent Fallback Notice */}
+        {isGlobalSearchFallback && (
+          <div 
+            className="global-search-fallback-banner" 
+            style={{
+              margin: '0.45rem 0.25rem 0.65rem',
+              padding: '0.45rem 0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+              background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.14) 0%, rgba(56, 189, 248, 0.12) 100%)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.78rem',
+              color: '#fef3c7',
+              animation: 'fadeIn 0.25s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <Sparkles size={14} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+              <span>
+                Showing <strong>{filteredCount}</strong> results across the entire portfolio for "<strong>{searchQuery}</strong>" (none matched your active category/venue filter).
+              </span>
+            </div>
+            <button
+              onClick={handleResetFilters}
+              className="apple-btn apple-btn-outline-gold"
+              style={{
+                padding: '0.22rem 0.55rem',
+                fontSize: '0.72rem',
+                whiteSpace: 'nowrap',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem'
+              }}
+              type="button"
+              title="Clear category and venue filters to explore full search results"
+            >
+              <RotateCcw size={11} />
+              <span>Clear Filter Restrictions</span>
+            </button>
+          </div>
+        )}
 
         {/* Row 2: Category Chips & Compact Inline Dropdowns */}
         <div className="control-bar-minimal-bottom">
