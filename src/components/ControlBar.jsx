@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, LayoutGrid, Layers, Table, MapPin, X, RotateCcw, Sparkles } from 'lucide-react';
+import { Search, LayoutGrid, Layers, Table, MapPin, X, RotateCcw, Sparkles, RefreshCw } from 'lucide-react';
 
 export default function ControlBar({
   viewMode,
@@ -20,6 +20,7 @@ export default function ControlBar({
   statusCounts = {},
   venueCounts = {},
   onExtractDailyIPs,
+  isExtracting = false,
   filteredCount,
   totalCount,
   isGlobalSearchFallback = false,
@@ -272,8 +273,16 @@ export default function ControlBar({
                   title={chip.tooltip || `Filter by ${chip.label}`}
                   type="button"
                 >
-                  <span className="chip-icon">{chip.icon}</span>
-                  <span className="chip-text">{chip.label}</span>
+                  <span className="chip-icon">
+                    {chip.id === 'today' && isExtracting ? (
+                      <RefreshCw size={12} className="spin-animation" style={{ color: '#fbbf24' }} />
+                    ) : (
+                      chip.icon
+                    )}
+                  </span>
+                  <span className="chip-text">
+                    {chip.id === 'today' && isExtracting ? 'Extracting...' : chip.label}
+                  </span>
                   {chip.count !== undefined && (
                     <span className={`chip-count ${chip.isFlame ? 'chip-flame-count' : ''}`}>
                       {chip.count}

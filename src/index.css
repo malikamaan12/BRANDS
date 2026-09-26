@@ -2715,6 +2715,21 @@ body::after {
   }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-hover, .spin-animation {
+  animation: spin 0.85s linear infinite;
+}
+
+.nav-icon-btn.extracting-active {
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.45);
+  border-color: rgba(251, 191, 36, 0.6) !important;
+}
+
+
 /* ==========================================================================
    MOBILE RESPONSIVENESS (< 768px and < 480px)
    ========================================================================== */

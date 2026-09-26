@@ -23,6 +23,7 @@ import { getExtractionSettings, syncFromGoogleSheet } from './services/extractio
 export default function App() {
   const [ips, setIps] = useState(() => loadIPs());
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -358,16 +359,25 @@ export default function App() {
     }
   };
 
-  // Manual trigger to extract at least 10 brand-new unique entertainment IPs & branded events
-  const handleExtractDailyIPs = () => {
-    const result = extractBatchDailyIPs(ips, 10);
-    if (result.added.length > 0) {
-      setIps((prev) => [...prev, ...result.added]);
-      // Background async push to Neon (stateless, closes immediately)
-      NeonDbService.upsertIps(result.added).catch(() => {});
-      showToast(`⚡ Daily Extraction: Ingested ${result.added.length} new IPs (${result.remainingInPool} left in pool, 0 duplicates)!`);
-    } else {
-      showToast(`⚡ Discovery pool is fully up-to-date! All pipeline properties are active.`);
+  // Manual trigger to extract brand-new verified unique entertainment IPs & branded events
+  const handleExtractDailyIPs = async () => {
+    if (isExtracting) return;
+    setIsExtracting(true);
+    showToast('⚡ Connecting to Live Entertainment Intelligence Engine...');
+    try {
+      const result = await extractBatchDailyIPs(ips, 6);
+      if (result.added && result.added.length > 0) {
+        setIps((prev) => sanitizeAndDeduplicateIPs([...result.added, ...prev]));
+        // Background async push to Neon (stateless, closes immediately)
+        NeonDbService.pushIps(result.added).catch(() => {});
+        showToast(`⚡ ${result.source}: Ingested ${result.added.length} verified new IPs (0 duplicates)!`);
+      } else {
+        showToast(result.message || '⚡ Portfolio is fully up-to-date with all verified global tours.');
+      }
+    } catch (err) {
+      showToast(`⚠️ Extraction note: ${err.message || 'Verification complete'}`);
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -439,6 +449,7 @@ export default function App() {
         onExportJSON={handleExportJSON}
         onResetData={handleResetData}
         onExtractDailyIPs={handleExtractDailyIPs}
+        isExtracting={isExtracting}
         currentUser={currentUser}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
@@ -478,6 +489,7 @@ export default function App() {
         statusCounts={statusCounts}
         venueCounts={venueCounts}
         onExtractDailyIPs={handleExtractDailyIPs}
+        isExtracting={isExtracting}
         filteredCount={filteredIPs.length}
         totalCount={ips.length}
         isGlobalSearchFallback={isGlobalSearchFallback}

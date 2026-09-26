@@ -133,13 +133,17 @@ export async function onRequestPost(context) {
 Search the live web for 5 REAL, active international touring productions, arena stunt spectacles, immersive exhibitions, or Broadway/West End stage shows touring in 2025-2026.
 Focus: ${queryFocus || 'Premier family entertainment, arena spectacles, and immersive exhibitions'}.
 
+CRITICAL ANTI-DUPLICATION RULE:
+DO NOT INCLUDE any property or franchise that already exists in our portfolio:
+Disney On Ice, PAW Patrol, Harry Potter, Jurassic World, Cirque du Soleil, Monster Jam, Peppa Pig, Blippi, CoComelon, Marvel, Pixar, Bluey, Monopoly, Hot Wheels, Crayola, Transformers, Sesame Street, Smurfs, Minecraft, Barbie, LEGO, Sonic, Pokemon, Dora, Care Bears, Play-Doh.
+
 Return ONLY a strict JSON array of objects with keys:
 "title", "category", "licensor", "producer", "person", "email", "website", "linkedin_url", "past_shows", "venue_fit", "brand_details", "notes"
 
 Doha Venues to match: QNCC Theater, DECC Exhibition Halls, Lusail Multipurpose Arena, Katara Opera House, Place Vendôme Atrium.
 Do NOT include markdown backticks or commentary. Only raw JSON.`;
 
-      const models = ['gemini-flash-latest', 'gemini-3.5-flash-lite'];
+      const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-lite-latest'];
       let aiJson = null;
       let lastErr = null;
 

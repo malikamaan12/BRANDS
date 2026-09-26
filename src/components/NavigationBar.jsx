@@ -13,6 +13,7 @@ export default function NavigationBar({
   onExportJSON, 
   onResetData, 
   onExtractDailyIPs,
+  isExtracting = false,
   currentUser,
   onOpenLoginModal,
   onOpenAdminModal,
@@ -61,12 +62,17 @@ export default function NavigationBar({
           
           {/* Automated Daily Discovery Icon Button */}
           <button 
-            className="nav-icon-btn amber"
+            className={`nav-icon-btn amber ${isExtracting ? 'extracting-active' : ''}`}
             onClick={onExtractDailyIPs}
-            title="Extract Daily Leads (+10 New Properties)"
+            disabled={isExtracting}
+            title={isExtracting ? "Extracting & Verifying Global Leads..." : "Extract Daily Leads (+6 Verified Properties)"}
             aria-label="Extract Daily Leads"
           >
-            <Zap size={16} fill="#fbbf24" />
+            {isExtracting ? (
+              <RefreshCw size={16} className="spin-animation" style={{ color: '#fbbf24' }} />
+            ) : (
+              <Zap size={16} fill="#fbbf24" color="#fbbf24" />
+            )}
           </button>
 
           {/* Neon Cloud Sync Button */}

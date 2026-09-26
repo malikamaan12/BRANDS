@@ -663,10 +663,10 @@ export const INITIAL_IPS = [
   },
   {
     "id": "IP-034",
-    "title": "Brickman: Wonders of the World & Jurassic World LEGO® Adventure",
+    "title": "Brickman: Wonders of the World LEGO® Brick Exhibition",
     "image": "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=800&q=80",
     "category": "Interactive LEGO® Touring Exhibition & Build Play Zones",
-    "licensor": "The LEGO Group / Universal Brand Development",
+    "licensor": "The LEGO Group",
     "producer": "The Brickman / Ryan McNaught",
     "person": "Ryan McNaught (LEGO Certified Professional & Director) / Mark Gray (General Manager)",
     "website": "https://www.thebrickman.com",
@@ -675,11 +675,11 @@ export const INITIAL_IPS = [
     "past_shows": "Over 8 globally touring exhibitions, including Paris Expo Porte de Versailles, Sydney, Melbourne, New Zealand (over 2M+ bricks per exhibition)",
     "venue_fit": "DECC, Place Vendôme, or Mall of Qatar; combines monumental LEGO builds with interactive guest building zones",
     "status": "Not Contacted",
-    "email_template": "Subject: Venue & Promoter Proposal: Brickman LEGO Touring Exhibition in Doha\n\nDear The Brickman Touring & Exhibitions Team,\n\nI am reaching out regarding bringing a Brickman touring exhibition (such as Wonders of the World or Jurassic World by LEGO) to Doha, Qatar. We operate large-scale experiential and brand activations in Doha, with access to premier exhibition halls and luxury shopping destinations. Given the strong appetite for interactive, hands-on family experiences in the Gulf, a multi-month Brickman engagement would be a prime destination attraction. Please let us know your promoter package terms and upcoming Middle East touring availability.\n\nBest regards,",
+    "email_template": "Subject: Venue & Promoter Proposal: Brickman LEGO Touring Exhibition in Doha\n\nDear The Brickman Touring & Exhibitions Team,\n\nI am reaching out regarding bringing a Brickman touring exhibition (such as Wonders of the World) to Doha, Qatar. We operate large-scale experiential and brand activations in Doha, with access to premier exhibition halls and luxury shopping destinations. Given the strong appetite for interactive, hands-on family experiences in the Gulf, a multi-month Brickman engagement would be a prime destination attraction. Please let us know your promoter package terms and upcoming Middle East touring availability.\n\nBest regards,",
     "notes": "Combines display sculptures with millions of loose bricks for guest build zones.",
     "linkedin_url": "https://linkedin.com/company/the-brickman",
-    "past_show_url": "https://www.youtube.com/results?search_query=Brickman%20Wonders%20of%20the%20World%20%20Jurassic%20World%20LEGO%20Adventure%20live%20tour%20footage",
-    "brand_details": "Multi-million dollar blockbuster immersive experience created in partnership with The LEGO Group / Universal Brand Development. Over 5M visitors across North America, Europe, and Asia featuring authentic movie props, sets, and state-of-the-art interactive digital technology."
+    "past_show_url": "https://www.youtube.com/results?search_query=Brickman%20Wonders%20of%20the%20World%20LEGO%20Brick%20Exhibition%20live%20tour%20footage",
+    "brand_details": "Monumental LEGO touring exhibition featuring Ryan McNaught's 50+ world wonder masterpieces and 1,000,000 loose bricks for interactive visitor creation."
   },
   {
     "id": "IP-035",
@@ -970,9 +970,9 @@ export const KNOWN_FRANCHISE_KEYS = [
   'cocomelon', 'bluey', 'hot wheels', 'jurassic', 'harry potter', 'monopoly',
   'blippi', 'nerf', 'peanuts', 'snoopy', 'paw patrol', 'katmandu', 'marvel',
   'pixar', 'peppa pig', 'minecraft', 'disney on ice', 'barbie', 'monster jam',
-  'friends', 'transformers', 'lol surprise', 'sesame street', 'smurfs', 'disney jr',
+  'friends experience', 'transformers', 'lol surprise', 'sesame street', 'smurfs', 'disney jr',
   'bbc earth', 'caterpillar', 'crayola', 'shaun the sheep', 'paddington',
-  'dinos alive', 'thomas', 'cirque du soleil', 'angry birds', 'brick', 'lego',
+  'dinos alive', 'thomas', 'cirque du soleil', 'angry birds', 'brickman', 'lego',
   'masha', 'miraculous', 'sonic', 'pokemon', 'dora', 'care bears', 'play-doh',
   'geronimo stilton', 'wallace', 'gigantosaurus'
 ];

@@ -2,8 +2,9 @@
 // LIVE EXTRACTION & INGESTION PIPELINE (Google Sheets + Gemini AI Web Search)
 // ============================================================================
 
-import { normalizeSignature } from './dailyExtractionEngine';
-import { getCategoryFallbackImage } from '../components/CardsView';
+import { normalizeSignature } from './dailyExtractionEngine.js';
+import { getCategoryFallbackImage } from '../components/CardsView.jsx';
+import { isDuplicateOf } from '../data/ips.js';
 
 const SETTINGS_STORAGE_KEY = 'doha_extraction_pipeline_settings';
 
@@ -214,8 +215,8 @@ export async function syncFromGoogleSheet(sheetUrl, existingIPs = []) {
     if (!title) continue;
 
     const sig = normalizeSignature(title);
-    if (existingSignatures.has(sig)) {
-      continue; // Skip duplicates
+    if (existingSignatures.has(sig) || isDuplicateOf(title, existingIPs) || isDuplicateOf(title, newIPs)) {
+      continue; // Skip duplicate signatures or franchise overlaps
     }
     existingSignatures.add(sig);
 
@@ -297,10 +298,10 @@ export async function runGeminiWebExtraction(apiKey, queryFocus = '', existingIP
 
   saveExtractionSettings({ geminiApiKey: trimmedKey });
 
-  const existingTitles = existingIPs.slice(0, 50).map(ip => ip.title).join(', ');
+  const existingTitles = existingIPs.slice(0, 44).map(ip => ip.title).join(', ');
 
   const systemPrompt = `You are the Chief Entertainment IP Scouting Intelligence Officer for E3 Live & Qatar Tourism in Doha, Qatar.
-Your mission is to perform live web intelligence to discover 5 to 8 REAL, currently touring or newly announced (2024-2026) global entertainment properties, arena spectacles, Broadway/West End theatricals, preschool live shows, or immersive blockbuster exhibitions.
+Your mission is to perform live web intelligence to discover 5 to 8 REAL, currently touring or newly announced (2025-2026) global entertainment properties, arena spectacles, Broadway/West End theatricals, preschool live shows, or immersive blockbuster exhibitions.
 
 DOHA VENUES TO MATCH TO:
 - Qatar National Convention Centre (QNCC) Theater (2,300 seats)
@@ -310,8 +311,10 @@ DOHA VENUES TO MATCH TO:
 - Place Vendôme & Luxury Malls (Atrium pop-ups, family FEC activations)
 - Aspire Zone (Outdoor family festivals, high-capacity obstacle zones)
 
-DO NOT INCLUDE properties that already exist in our portfolio:
-${existingTitles}
+CRITICAL ANTI-DUPLICATION RULE:
+DO NOT INCLUDE any property or franchise that already exists in our portfolio:
+Disney On Ice, PAW Patrol, Harry Potter, Jurassic World, Cirque du Soleil, Monster Jam, Peppa Pig, Blippi, CoComelon, Marvel, Pixar, Bluey, Monopoly, Hot Wheels, Crayola, Transformers, Sesame Street, Smurfs, Minecraft, Barbie, LEGO, Sonic, Pokemon, Dora, Care Bears, Play-Doh.
+Current titles: ${existingTitles}
 
 Return a STRICT JSON ARRAY of objects. Each object must have these exact keys:
 [
@@ -336,8 +339,8 @@ Output ONLY raw JSON. Do not include markdown codeblocks or extra text.`;
     ? `Search the web for newly touring global entertainment properties matching this focus: "${queryFocus}". Return verified real productions.`
     : `Search the web for top global touring entertainment IPs, immersive exhibitions, and arena spectacles touring internationally in 2025-2026 suitable for Qatar.`;
 
-  // Prioritized model fallback list for high-demand resilience
-  const models = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
+  // Prioritized model fallback list for ultra-fast, high-availability generation
+  const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-lite-latest'];
   let responseData = null;
   let lastError = null;
 
@@ -415,7 +418,9 @@ Output ONLY raw JSON. Do not include markdown codeblocks or extra text.`;
     if (!title) continue;
 
     const sig = normalizeSignature(title);
-    if (existingSignatures.has(sig)) continue;
+    if (existingSignatures.has(sig) || isDuplicateOf(title, existingIPs) || isDuplicateOf(title, newIPs)) {
+      continue; // Strictly block duplicate signatures or franchise overlaps
+    }
     existingSignatures.add(sig);
 
     maxIdNum += 1;
