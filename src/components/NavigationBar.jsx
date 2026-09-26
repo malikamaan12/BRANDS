@@ -191,30 +191,59 @@ export default function NavigationBar({
             </button>
           )}
 
-          {/* RBAC USER PROFILE ICON & DROPDOWN */}
-          <div style={{ position: 'relative' }} ref={menuRef}>
-            {currentUser ? (
+          {/* RBAC USER PROFILE GROUP & PROMINENT SIGN OUT BUTTON */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            
+            {/* Explicit Sign Out Button (Takes user directly back to Login Page) */}
+            {currentUser && (
               <button
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className={`nav-avatar-btn ${isAdmin ? 'admin' : ''}`}
-                title={`${currentUser.name} (${isAdmin ? 'Admin' : 'Normal User'})`}
-                aria-label="User Account Menu"
+                onClick={onLogout}
+                className="nav-signout-btn"
+                title="Sign out of active account and return to the Login Page"
+                aria-label="Sign Out"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.74rem',
+                  fontWeight: 650,
+                  padding: '0.38rem 0.75rem',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '10px',
+                  color: '#fca5a5',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                <div className="nav-avatar-inner">
-                  {isAdmin ? '👑' : currentUser.name.charAt(0).toUpperCase()}
-                </div>
-                <span className={`nav-avatar-status ${isAdmin ? 'gold' : 'cyan'}`}></span>
-              </button>
-            ) : (
-              <button
-                onClick={onOpenLoginModal}
-                className="nav-icon-btn primary"
-                title="Sign In"
-                aria-label="Sign In"
-              >
-                <LogIn size={16} />
+                <LogOut size={13} style={{ color: '#f87171' }} />
+                <span>Sign Out</span>
               </button>
             )}
+
+            <div style={{ position: 'relative' }} ref={menuRef}>
+              {currentUser ? (
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className={`nav-avatar-btn ${isAdmin ? 'admin' : ''}`}
+                  title={`${currentUser.name} (${isAdmin ? 'Admin' : 'Normal User'}) — Click to switch accounts or view permissions`}
+                  aria-label="User Account Menu"
+                >
+                  <div className="nav-avatar-inner">
+                    {isAdmin ? '👑' : currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className={`nav-avatar-status ${isAdmin ? 'gold' : 'cyan'}`}></span>
+                </button>
+              ) : (
+                <button
+                  onClick={onOpenLoginModal}
+                  className="nav-icon-btn primary"
+                  title="Sign In to E3 IP HUB"
+                  aria-label="Sign In"
+                >
+                  <LogIn size={16} />
+                </button>
+              )}
 
             {/* User Dropdown Menu */}
             {isUserMenuOpen && currentUser && (
@@ -301,10 +330,10 @@ export default function NavigationBar({
               </div>
             )}
           </div>
-
         </div>
 
       </div>
-    </header>
+    </div>
+  </header>
   );
 }

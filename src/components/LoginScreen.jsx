@@ -141,6 +141,68 @@ export default function LoginScreen({ onLoginSuccess }) {
           </div>
         </div>
 
+        {/* 1-Click Quick Fill Credentials */}
+        <div style={{ marginBottom: '1.2rem' }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.4rem' }}>
+            Quick-Fill Enterprise Account:
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@eeeqa.com');
+                setPassword('E3qatech@123!');
+                setErrorMsg('');
+              }}
+              style={{
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                borderRadius: '10px',
+                padding: '0.45rem 0.6rem',
+                color: '#fbbf24',
+                fontSize: '0.73rem',
+                fontWeight: 650,
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>👑 Master Admin</span>
+              <span style={{ fontSize: '0.64rem', color: 'rgba(251, 191, 36, 0.75)', fontFamily: 'monospace' }}>admin@eeeqa.com</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('hussain@eeeqa.com');
+                setPassword('E3qatech@123!');
+                setErrorMsg('');
+              }}
+              style={{
+                background: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                borderRadius: '10px',
+                padding: '0.45rem 0.6rem',
+                color: '#38bdf8',
+                fontSize: '0.73rem',
+                fontWeight: 650,
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>👤 Normal User</span>
+              <span style={{ fontSize: '0.64rem', color: 'rgba(56, 189, 248, 0.75)', fontFamily: 'monospace' }}>hussain@eeeqa.com</span>
+            </button>
+          </div>
+        </div>
+
 
         {/* Error Alert */}
         {errorMsg && (

@@ -24,7 +24,17 @@ export default function App() {
   const [ips, setIps] = useState(() => loadIPs());
   const [isSyncing, setIsSyncing] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
-  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const search = window.location.search || '';
+      const hash = window.location.hash || '';
+      if (search.includes('login') || search.includes('logout') || hash.includes('login') || hash.includes('logout')) {
+        authService.logout();
+        return null;
+      }
+    }
+    return authService.getCurrentUser();
+  });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isExtractionModalOpen, setIsExtractionModalOpen] = useState(false);
