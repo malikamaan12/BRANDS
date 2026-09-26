@@ -71,7 +71,7 @@ html, body {
   font-family: var(--font-family);
   letter-spacing: -0.018em;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   touch-action: manipulation;
 }
 
@@ -2187,7 +2187,8 @@ body::after {
    SPATIAL VISIONOS 1-SCREEN DOSSIER COCKPIT (Desktop 1-Screen Architecture)
    Zero vertical scrolling on desktop, high-density intelligence layout
    ========================================================================== */
-.modal-overlay {
+.modal-overlay,
+.modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -2198,6 +2199,7 @@ body::after {
   place-items: center;
   padding: 1.25rem;
   animation: modalFadeIn 200ms ease forwards;
+  overflow-y: auto;
 }
 
 @keyframes modalFadeIn {
