@@ -150,17 +150,6 @@ export default function App() {
     }, 2800);
   };
 
-  // Automated 24-hour daily extraction check on mount (ensuring zero duplicates)
-  useEffect(() => {
-    const res = checkAndTriggerDailyExtraction(ips, (newlyExtracted) => {
-      setIps((prev) => sanitizeAndDeduplicateIPs([...prev, ...newlyExtracted]));
-      NeonDbService.upsertIps(newlyExtracted).catch(() => {});
-    });
-    if (res?.extracted > 0) {
-      showToast(`⚡ Automated Daily Extraction: Ingested ${res.extracted} new verified entertainment IPs!`);
-    }
-  }, []);
-
   // Auto-sync from configured Google Sheet on startup (if enabled in settings)
   useEffect(() => {
     const settings = getExtractionSettings();

@@ -1033,3 +1033,11 @@ export function getTimeUntilNext8amDrop() {
     return 'Daily drop at 8:00 AM';
   }
 }
+
+/**
+ * Backwards compatibility stub for legacy daily extraction callers
+ */
+export function checkAndTriggerDailyExtraction(ips = [], callback) {
+  return { extracted: 0 };
+}
+
