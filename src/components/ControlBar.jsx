@@ -42,9 +42,6 @@ export default function ControlBar({
         setFilterLeadType('all');
         if (filterCategory === 'today') setFilterCategory('all');
       } else {
-        if (todayLeadsCount === 0 && onExtractDailyIPs) {
-          onExtractDailyIPs();
-        }
         setFilterLeadType('today');
         setFilterCategory('today');
       }

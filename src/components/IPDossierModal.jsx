@@ -434,9 +434,11 @@ export default function IPDossierModal({
               <p className="dossier-left-licensor">Rights: {ip.licensor || 'Independent'}</p>
 
               {ip.venue_fit && (
-                <div className="dossier-venue-badge" title={ip.venue_fit}>
+                <div className="dossier-venue-badge" title={typeof ip.venue_fit === 'string' ? ip.venue_fit : ''}>
                   <MapPin size={13} style={{ color: '#f43f5e', flexShrink: 0 }} />
-                  <span className="dossier-venue-text">{ip.venue_fit.split(';')[0]}</span>
+                  <span className="dossier-venue-text">
+                    {typeof ip.venue_fit === 'string' ? ip.venue_fit.split(';')[0] : (Array.isArray(ip.venue_fit) ? ip.venue_fit[0] : 'Qatar Ready')}
+                  </span>
                 </div>
               )}
             </div>

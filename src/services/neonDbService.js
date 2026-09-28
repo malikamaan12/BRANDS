@@ -9,7 +9,7 @@
  * 4. Local-first caching guarantees 100% functionality even during Neon cold boot or offline mode.
  */
 
-import { sanitizeAndDeduplicateIPs } from '../data/ips';
+import { sanitizeAndDeduplicateIPs } from '../data/ips.js';
 
 // UNIFIED STORAGE KEY (Matches src/data/ips.js)
 const LOCAL_STORAGE_KEY = 'doha_entertainment_ips_react';
@@ -49,11 +49,23 @@ export const NeonDbService = {
               team_remarks: teamRemarks,
               status: (!item.status || item.status === 'Prospect') ? (fallback.status || 'Not Contacted') : item.status,
               venue_fit: venueFitStr || fallback.venue_fit || '',
+              extracted_date: item.extracted_date || fallback.extracted_date || null,
+              isDailyDiscovered: Boolean(item.is_daily_discovered || item.isDailyDiscovered || fallback.isDailyDiscovered),
               email_template: item.email_template || fallback.email_template || `Subject: Host Partnership Inquiry: ${item.title} in Doha\n\nDear ${item.producer || item.licensor} Team,\n\nWe are writing to explore hosting ${item.title} in Doha, Qatar. Best regards,`
             };
           });
 
-          const deduplicated = sanitizeAndDeduplicateIPs(normalized);
+          // Merge remote items with local fallbackData to ensure newly extracted leads are NEVER dropped
+          const merged = [...normalized];
+          if (Array.isArray(fallbackData)) {
+            fallbackData.forEach(localItem => {
+              if (localItem && localItem.id && !merged.some(m => m.id === localItem.id)) {
+                merged.push(localItem);
+              }
+            });
+          }
+
+          const deduplicated = sanitizeAndDeduplicateIPs(merged);
 
           // Cache to unified localStorage
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(deduplicated));
@@ -204,13 +216,26 @@ export const NeonDbService = {
               ...item,
               status: (!item.status || item.status === 'Prospect') ? (local.status || 'Not Contacted') : item.status,
               venue_fit: venueFitStr || local.venue_fit || '',
+              extracted_date: item.extracted_date || local.extracted_date || null,
+              isDailyDiscovered: Boolean(item.is_daily_discovered || item.isDailyDiscovered || local.isDailyDiscovered),
               email_template: item.email_template || local.email_template || ''
             };
           });
 
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalized));
+          // Merge with any local properties not present in remote
+          const merged = [...normalized];
+          if (Array.isArray(localIps)) {
+            localIps.forEach(localItem => {
+              if (localItem && localItem.id && !merged.some(m => m.id === localItem.id)) {
+                merged.push(localItem);
+              }
+            });
+          }
+          const deduplicated = sanitizeAndDeduplicateIPs(merged);
+
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(deduplicated));
           localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
-          return { success: true, ips: normalized, source: result.source };
+          return { success: true, ips: deduplicated, source: result.source };
         }
       }
     } catch (err) {

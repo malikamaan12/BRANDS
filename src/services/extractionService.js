@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { normalizeSignature } from './dailyExtractionEngine.js';
-import { getCategoryFallbackImage, isDuplicateOf } from '../data/ips.js';
+import { getCategoryFallbackImage, isDuplicateOf, getTodayDateString } from '../data/ips.js';
 
 const SETTINGS_STORAGE_KEY = 'doha_extraction_pipeline_settings';
 
@@ -248,6 +248,8 @@ export async function syncFromGoogleSheet(sheetUrl, existingIPs = []) {
       notes: rowObj.notes || 'Imported from Google Sheet live sync.',
       image: rowObj.image || getCategoryFallbackImage(category),
       isSheetImported: true,
+      isDailyDiscovered: true,
+      extracted_date: getTodayDateString(),
       extracted_at: new Date().toISOString()
     };
 
@@ -339,7 +341,7 @@ Output ONLY raw JSON. Do not include markdown codeblocks or extra text.`;
     : `Search the web for top global touring entertainment IPs, immersive exhibitions, and arena spectacles touring internationally in 2025-2026 suitable for Qatar.`;
 
   // Prioritized model fallback list for ultra-fast, high-availability generation
-  const models = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite'];
+  const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
   let responseData = null;
   let lastError = null;
 
@@ -459,6 +461,8 @@ Output ONLY raw JSON. Do not include markdown codeblocks or extra text.`;
         }
       ],
       isAiExtracted: true,
+      isDailyDiscovered: true,
+      extracted_date: getTodayDateString(),
       extracted_at: new Date().toISOString()
     });
   }

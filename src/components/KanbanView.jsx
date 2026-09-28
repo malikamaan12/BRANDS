@@ -101,7 +101,7 @@ export default function KanbanView({ ips, onOpenDossier, onAdvanceStatus, onRese
                     </button>
 
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                      {(ip.producer || 'Direct Licensor').split('/')[0]}
+                      {(typeof ip.producer === 'string' ? ip.producer : (ip.licensor || 'Direct Licensor')).split('/')[0]}
                     </span>
                   </div>
 

@@ -194,7 +194,11 @@ export default function CardsView({
                     <span>Suggested Doha Staging Venue</span>
                   </div>
                   <div className="card-venue-reveal-text">
-                    {ip.venue_fit}
+                    {typeof ip.venue_fit === 'string' 
+                      ? ip.venue_fit 
+                      : (Array.isArray(ip.venue_fit) 
+                          ? ip.venue_fit.join(', ') 
+                          : (ip.venue_fit ? JSON.stringify(ip.venue_fit) : 'Suggested staging at DECC / QNCC'))}
                   </div>
                 </div>
               )}
@@ -220,11 +224,11 @@ export default function CardsView({
               <div className="inspiration-meta-group">
                 <div className="inspiration-meta-row">
                   <span>Licensor</span>
-                  <strong title={ip.licensor}>{ip.licensor}</strong>
+                  <strong title={ip.licensor}>{ip.licensor || 'Global Licensor'}</strong>
                 </div>
                 <div className="inspiration-meta-row">
                   <span>Tour Producer</span>
-                  <strong title={ip.producer}>{ip.producer.split('/')[0]}</strong>
+                  <strong title={ip.producer}>{(ip.producer || ip.licensor || 'Touring Production').split('/')[0]}</strong>
                 </div>
               </div>
 

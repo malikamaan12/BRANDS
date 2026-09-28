@@ -56,16 +56,21 @@ export default {
             status VARCHAR(32) DEFAULT 'Not Contacted',
             email_template TEXT,
             notes TEXT,
+            extracted_date TEXT,
+            is_daily_discovered BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
           );
+          ALTER TABLE entertainment_ips ADD COLUMN IF NOT EXISTS extracted_date TEXT;
+          ALTER TABLE entertainment_ips ADD COLUMN IF NOT EXISTS is_daily_discovered BOOLEAN DEFAULT FALSE;
         `;
 
         if (request.method === 'GET') {
           const rows = await sql`
             SELECT id, title, category, image, licensor, producer, person, email, 
                    website, linkedin_url, social, past_shows, past_show_url, 
-                   venue_fit, brand_details, status, email_template, notes, updated_at
+                   venue_fit, brand_details, status, email_template, notes, 
+                   extracted_date, is_daily_discovered, updated_at
             FROM entertainment_ips
             ORDER BY updated_at DESC
           `;
@@ -84,7 +89,8 @@ export default {
               INSERT INTO entertainment_ips (
                 id, title, category, image, licensor, producer, person, email,
                 website, linkedin_url, social, past_shows, past_show_url,
-                venue_fit, brand_details, status, email_template, notes, updated_at
+                venue_fit, brand_details, status, email_template, notes, 
+                extracted_date, is_daily_discovered, updated_at
               ) VALUES (
                 ${item.id},
                 ${item.title || ''},
@@ -104,6 +110,8 @@ export default {
                 ${item.status || 'Not Contacted'},
                 ${item.email_template || ''},
                 ${item.notes || ''},
+                ${item.extracted_date || null},
+                ${Boolean(item.isDailyDiscovered)},
                 NOW()
               )
               ON CONFLICT (id) DO UPDATE SET
@@ -124,6 +132,8 @@ export default {
                 status = EXCLUDED.status,
                 email_template = EXCLUDED.email_template,
                 notes = EXCLUDED.notes,
+                extracted_date = COALESCE(EXCLUDED.extracted_date, entertainment_ips.extracted_date),
+                is_daily_discovered = COALESCE(EXCLUDED.is_daily_discovered, entertainment_ips.is_daily_discovered),
                 updated_at = NOW();
             `;
           }
@@ -193,7 +203,8 @@ export default {
               INSERT INTO entertainment_ips (
                 id, title, category, image, licensor, producer, person, email,
                 website, linkedin_url, social, past_shows, past_show_url,
-                venue_fit, brand_details, status, email_template, notes, updated_at
+                venue_fit, brand_details, status, email_template, notes, 
+                extracted_date, is_daily_discovered, updated_at
               ) VALUES (
                 ${item.id},
                 ${item.title || ''},
@@ -213,6 +224,8 @@ export default {
                 ${item.status || 'Not Contacted'},
                 ${item.email_template || ''},
                 ${item.notes || ''},
+                ${item.extracted_date || null},
+                ${Boolean(item.isDailyDiscovered)},
                 NOW()
               ) ON CONFLICT (id) DO NOTHING;
             `;
@@ -222,7 +235,8 @@ export default {
         const remoteIps = await sql`
           SELECT id, title, category, image, licensor, producer, person, email, 
                  website, linkedin_url, social, past_shows, past_show_url, 
-                 venue_fit, brand_details, status, email_template, notes, updated_at
+                 venue_fit, brand_details, status, email_template, notes, 
+                 extracted_date, is_daily_discovered, updated_at
           FROM entertainment_ips
           ORDER BY updated_at DESC
         `;
@@ -430,13 +444,15 @@ export default {
                   INSERT INTO entertainment_ips (
                     id, title, category, image, licensor, producer, person, email,
                     website, linkedin_url, social, past_shows, past_show_url,
-                    venue_fit, brand_details, status, email_template, notes, updated_at
+                    venue_fit, brand_details, status, email_template, notes, 
+                    extracted_date, is_daily_discovered, updated_at
                   ) VALUES (
                     ${ip.id}, ${ip.title || ''}, ${ip.category || 'Touring Entertainment'}, ${ip.image || ''},
                     ${ip.licensor || ''}, ${ip.producer || ''}, ${ip.person || ''}, ${ip.email || ''},
                     ${ip.website || ''}, ${ip.linkedin_url || ''}, ${ip.social || ''}, ${ip.past_shows || ''},
                     ${ip.past_show_url || ''}, ${venueStr}, ${JSON.stringify(ip.brand_details || {})}::jsonb,
-                    ${ip.status || 'Not Contacted'}, ${ip.email_template || ''}, ${ip.notes || ''}, NOW()
+                    ${ip.status || 'Not Contacted'}, ${ip.email_template || ''}, ${ip.notes || ''}, 
+                    ${ip.extracted_date || null}, ${Boolean(ip.isDailyDiscovered)}, NOW()
                   ) ON CONFLICT (id) DO UPDATE SET
                     title = EXCLUDED.title, category = EXCLUDED.category, updated_at = NOW();
                 `;
@@ -481,7 +497,7 @@ export default {
 
             const prompt = `Search the web for 5 REAL, active international touring entertainment properties, exhibitions, or arena shows touring in 2025-2026. Focus: ${queryFocus || 'Family entertainment, arena spectacles, and immersive exhibitions'}. Return ONLY a strict JSON array of objects with keys: "title", "category", "licensor", "producer", "person", "email", "website", "linkedin_url", "past_shows", "venue_fit", "brand_details", "notes". Doha venues: QNCC, DECC, Lusail Arena, Katara, Place Vendôme. Output raw JSON only.`;
 
-            const models = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
+            const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
             let aiJson = null;
             let lastErr = null;
 

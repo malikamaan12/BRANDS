@@ -60,7 +60,17 @@ export default function App() {
     let isMounted = true;
     NeonDbService.getIps(ips).then((result) => {
       if (isMounted && result?.ips?.length) {
-        setIps(sanitizeAndDeduplicateIPs(result.ips));
+        setIps(prev => {
+          const combined = [...result.ips];
+          prev.forEach(p => {
+            if (!combined.some(c => c.id === p.id)) {
+              combined.push(p);
+            }
+          });
+          const sanitized = sanitizeAndDeduplicateIPs(combined);
+          saveIPs(sanitized);
+          return sanitized;
+        });
       }
     }).catch(() => {});
     return () => { isMounted = false; };
@@ -367,21 +377,26 @@ export default function App() {
     if (isExtracting) return;
     setIsExtracting(true);
     const isAuto8am = triggerSource === '8am';
+    if (isAuto8am) {
+      record8amDailyDropExecuted(count);
+    }
     showToast(isAuto8am ? '🌅 8:00 AM Lead Drop: Ingesting 10 verified global entertainment leads...' : '⚡ Connecting to Live Entertainment Intelligence Engine...');
     try {
       const result = await extractBatchDailyIPs(ips, count);
       if (result.added && result.added.length > 0) {
-        setIps((prev) => sanitizeAndDeduplicateIPs([...result.added, ...prev]));
+        setIps((prev) => {
+          const updated = sanitizeAndDeduplicateIPs([...result.added, ...prev]);
+          saveIPs(updated);
+          return updated;
+        });
         // Background async push to Neon (stateless, closes immediately)
         NeonDbService.pushIps(result.added).catch(() => {});
         if (isAuto8am) {
-          record8amDailyDropExecuted(result.added.length);
           showToast(`🌅 Morning 8:00 AM Lead Drop: Ingested ${result.added.length} verified new touring IPs!`);
         } else {
           showToast(`⚡ ${result.source}: Ingested ${result.added.length} verified new IPs (0 duplicates)!`);
         }
       } else {
-        if (isAuto8am) record8amDailyDropExecuted(0);
         showToast(result.message || '⚡ Portfolio is fully up-to-date with all verified global tours.');
       }
     } catch (err) {
@@ -394,7 +409,7 @@ export default function App() {
   // Automated Morning 8:00 AM Lead Drop: Checks local time and fetches 10 leads at 8:00 AM daily
   useEffect(() => {
     const check8amDrop = () => {
-      if (shouldTrigger8amDailyDrop() && !isExtracting) {
+      if (shouldTrigger8amDailyDrop(ips) && !isExtracting) {
         handleExtractDailyIPs(10, '8am');
       }
     };

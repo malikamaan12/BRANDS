@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS entertainment_ips (
     status VARCHAR(32) DEFAULT 'Prospect',
     email_template TEXT,
     notes TEXT,
+    extracted_date TEXT,
+    is_daily_discovered BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

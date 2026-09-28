@@ -1069,14 +1069,22 @@ export function sanitizeAndDeduplicateIPs(list = []) {
 }
 
 /**
- * Determine if an IP was discovered today or via daily discovery
+ * Local date string formatter (YYYY-MM-DD)
+ */
+export function getTodayDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Determine if an IP was discovered today
  */
 export function isTodayLead(ip) {
   if (!ip) return false;
-  if (ip.isDailyDiscovered === true) return true;
-  if (ip.extracted_at || ip.extracted_date) return true;
-  const num = parseInt((ip.id || '').replace('IP-', ''), 10);
-  return !isNaN(num) && num > 44;
+  const today = getTodayDateString();
+  if (ip.extracted_date === today) return true;
+  if (ip.extracted_at && typeof ip.extracted_at === 'string' && ip.extracted_at.slice(0, 10) === today) return true;
+  return false;
 }
 
 export function loadIPs() {
